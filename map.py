@@ -17,10 +17,13 @@ class Map(ABC):
 
         # Keeps track of room occupancy
         self.rooms = [[0] * num_agents for _ in range(self.room_nums)]
-        self.rooms[0] = [1] * num_agents
+        self.rooms[self.room_start] = [1] * num_agents
 
         # Keeps track of what events have happened in a room
         self.room_events = [[] for _ in range(self.room_nums)]
+
+        # Keeps track of corpses
+        self.corpses = [[] for _ in range(self.room_nums)]
 
         # Used for navigation
         self.nav = self.create_nav()
@@ -44,6 +47,10 @@ class Map(ABC):
         self.rooms[picked_room][agent.agent_id] = 1
         return picked_room
 
+    def mark_agent_killed(self, agent):
+        self.remove_agent(agent)
+        self.corpses[agent.room].append((agent.agent_id, "Corpse"))
+
     def remove_agent(self, agent):
         self.rooms[agent.room][agent.agent_id] = 0
 
@@ -54,7 +61,12 @@ class Map(ABC):
         self.room_events[room].append(event)
 
     def get_room_events(self, room):
-        return self.room_events[room]
+        all_evts = self.room_events[room]
+        all_evts.extend(self.corpses[room])
+        return all_evts
+
+    def clear_corpses(self):
+        self.corpses = [[] for _ in range(self.room_nums)]
 
     def create_tasks_unique(self, num_tasks):
         if num_tasks > len(self.tasks):
@@ -62,6 +74,12 @@ class Map(ABC):
             exit(1)
 
         return random.sample(self.tasks, num_tasks)
+
+    def move_to_meeting_room(self, agent):
+
+        self.rooms[agent.room][agent.agent_id] = 0
+        self.rooms[self.room_meeting][agent.agent_id] = 1
+        agent.room = self.room_meeting
 
     # No need for a terribly efficient algorithm: Maps are small
     # so a simple BFS works

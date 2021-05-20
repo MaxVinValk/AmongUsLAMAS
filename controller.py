@@ -28,13 +28,20 @@ class Controller:
                 self.__remove_agent_with_id(result)
 
         elif phase == "observe":
-            spotted_kills = [a.observe() for a in self.agents]
+            spotted_corpses = [a.observe() for a in self.agents]
             self.game_map.reset_room_events()
 
-            if True not in spotted_kills:
+            if True not in spotted_corpses:
                 next_phase = 0
 
         elif phase == "discuss":
+            # If we have reached this phase, it is because at least 1 corpse has been found. Thus, we clear all corpses
+            self.game_map.clear_corpses()
+
+            # Everyone is moved to the discussion room
+            [self.game_map.move_to_meeting_room(a) for a in self.agents]
+
+
             # Discussing takes two phases
             announced = [a.announce() for a in self.agents]
             [a.receive(announced) for a in self.agents]
@@ -56,10 +63,12 @@ class Controller:
 
         dead_agent = None
 
+        # TODO: This could be improved with a dictionary mapping IDs to objects. But we do not need such improvements
+        # as the set of agents is small
         for agent in self.agents:
             if agent.agent_id == agent_id:
                 dead_agent = agent
                 break
 
-        self.game_map.remove_agent(dead_agent)
+        self.game_map.mark_agent_killed(dead_agent)
         self.agents.remove(dead_agent)

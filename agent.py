@@ -56,7 +56,8 @@ class Crewmate(Agent):
                 self.room = self.game_map.move_random(self)
                 return
 
-        self.room = self.game_map.next_toward(self, self.goal[0])
+        if self.room is not self.goal[0]:
+            self.room = self.game_map.next_toward(self, self.goal[0])
 
     def act(self):
         if self.goal and self.room is self.goal[0]:
@@ -69,7 +70,7 @@ class Crewmate(Agent):
         obs = self.game_map.get_room_events(self.room)
 
         for evt in obs:
-            if evt[1].startswith("kill"):
+            if evt[1].startswith("Corpse"):
                 return True
 
     def announce(self):
@@ -93,7 +94,7 @@ class Impostor(Agent):
     def act(self):
         current_room = self.game_map.rooms[self.room]
 
-        # TODO: ALlow for more than one impostor here.
+        # TODO: Allow for more than one impostor here.
         # Easiest adjustment: Give each Impostor the ID of each impostor
 
         num_others = sum(current_room) - 1
