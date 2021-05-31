@@ -14,9 +14,7 @@ class Agent(ABC):
         self.room = game_map.room_start
         self.alive = True
 
-    # @abstractmethod
-    # def move(self):
-    #    pass
+        self.location_history = [self.room]
 
     @abstractmethod
     def act(self):
@@ -38,10 +36,12 @@ class Agent(ABC):
     def vote(self):
         pass
 
-    # Meant to run any logic associated with resetting a round. Initially, only used for the impostor.
-    @abstractmethod
+    # Meant to run any logic associated with resetting a round.
     def round_reset(self):
-        pass
+        self.location_history.clear()
+
+        # Keep the current room as the position we have been in for two timeframes for later
+        self.location_history.append(self.room)
 
     @abstractmethod
     def is_impostor(self):
@@ -58,11 +58,15 @@ class Crewmate(Agent):
 
         self.tasks = game_map.create_tasks_unique(num_tasks)
         self.goal = None
+        self.goal_history = []
 
     def act(self):
         if self.goal and self.room is self.goal[0]:
             print(
                 f"Crewmate {self.agent_id} completed their goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
+
+            # If we perform an action in a room, we can only see the room in which the action is performed.
+            self.location_history.append(self.room)
             self.game_map.add_room_event(self.room, (self.agent_id, self.goal[1]))
             self.goal = None
         else:
@@ -73,20 +77,32 @@ class Crewmate(Agent):
         if self.goal is None:
             if self.tasks:
                 self.goal = self.tasks.pop()
+                self.goal_history.append(self.goal)
                 print(
                     f"Crewmate {self.agent_id} set as goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
             else:
                 self.room = self.game_map.move_random(self)
+                self.location_history.append(self.room)
                 return
 
         if self.room is not self.goal[0]:
             self.room = self.game_map.next_toward(self, self.goal[0])
 
+        # Log the current room we are in: Either the room we moved to, or the room that happens to be the goal room
+        self.location_history.append(self.room)
+
+
     def observe(self):
         # TODO: add observations to KM
-        obs = self.game_map.get_room_events(self.room)
 
-        for evt in obs:
+        # After acting, it is guaranteed that there are at least 2 rooms in memory.
+        origin_room_evts = self.game_map.get_room_events(self.location_history[-2])
+        target_room_evts = self.game_map.get_room_events(self.location_history[-1])
+
+        # origin_room_evts now contains events in both rooms
+        origin_room_evts.extend(target_room_evts)
+
+        for evt in origin_room_evts:
             if evt[1].startswith("Corpse"):
                 return True
 
@@ -99,18 +115,23 @@ class Crewmate(Agent):
     def vote(self):
         pass
 
-    def round_reset(self):
-        pass
-
     def is_impostor(self):
         return False
+
+    def round_reset(self):
+        super().round_reset()
+        self.goal_history.clear()
 
 
 class Impostor(Agent):
 
-    def __init__(self, agent_id, num_crew, num_imp, game_map, logger, cooldown):
+    def __init__(self, agent_id, num_crew, num_imp, game_map, logger, cooldown, stat_threshold):
         self.cooldown = cooldown
         self.cooldown_ctr = self.cooldown
+
+        # Stationary threshold: Threshold for standing still instead of moving during move function
+        self.stat_threshold = stat_threshold
+
         super().__init__(agent_id, num_crew, num_imp, game_map, logger)
 
     def act(self):
@@ -150,7 +171,11 @@ class Impostor(Agent):
         self.__move()
 
     def __move(self):
-        self.room = self.game_map.move_random(self)
+        if random.random() > self.stat_threshold:
+            self.room = self.game_map.move_random(self)
+
+        self.location_history.append(self.room)
+
 
     def observe(self):
         # The impostor tells at random, so it does not need to see
@@ -173,6 +198,7 @@ class Impostor(Agent):
         return random.sample([x for x in range(total) if not x == self.agent_id], 1)[0]
 
     def round_reset(self):
+        super().round_reset()
         self.reset_cooldown()
 
     def is_impostor(self):

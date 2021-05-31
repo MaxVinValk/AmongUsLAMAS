@@ -13,7 +13,8 @@ def default_controller(num_crew, num_imp, num_tasks):
 
     # TODO: Multiple impostor support here
     COOLDOWN = 5
-    agents.append(Impostor(num_crew, num_crew, num_imp, ss, None, COOLDOWN))
+    STATIONARY_THRESHOLD = 0.8
+    agents.append(Impostor(num_crew, num_crew, num_imp, ss, None, COOLDOWN, STATIONARY_THRESHOLD))
 
     controller = Controller(agents, ss)
 
