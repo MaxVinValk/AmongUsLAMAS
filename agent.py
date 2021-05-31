@@ -1,6 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 
+
 class Agent(ABC):
 
     def __init__(self, agent_id, num_crew, num_imp, game_map, logger):
@@ -13,9 +14,9 @@ class Agent(ABC):
         self.room = game_map.room_start
         self.alive = True
 
-    @abstractmethod
-    def move(self):
-        pass
+    # @abstractmethod
+    # def move(self):
+    #    pass
 
     @abstractmethod
     def act(self):
@@ -37,6 +38,18 @@ class Agent(ABC):
     def vote(self):
         pass
 
+    # Meant to run any logic associated with resetting a round. Initially, only used for the impostor.
+    @abstractmethod
+    def round_reset(self):
+        pass
+
+    @abstractmethod
+    def is_impostor(self):
+        pass
+
+    def is_alive(self):
+        return self.alive
+
 
 class Crewmate(Agent):
 
@@ -46,24 +59,28 @@ class Crewmate(Agent):
         self.tasks = game_map.create_tasks_unique(num_tasks)
         self.goal = None
 
+    def act(self):
+        if self.goal and self.room is self.goal[0]:
+            print(
+                f"Crewmate {self.agent_id} completed their goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
+            self.game_map.add_room_event(self.room, (self.agent_id, self.goal[1]))
+            self.goal = None
+        else:
+            self.__move()
+
     # Set a goal if we have none and there are tasks left, and move toward it if we have it
-    def move(self):
+    def __move(self):
         if self.goal is None:
             if self.tasks:
                 self.goal = self.tasks.pop()
-                print(f"Crewmate {self.agent_id} set as goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
+                print(
+                    f"Crewmate {self.agent_id} set as goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
             else:
                 self.room = self.game_map.move_random(self)
                 return
 
         if self.room is not self.goal[0]:
             self.room = self.game_map.next_toward(self, self.goal[0])
-
-    def act(self):
-        if self.goal and self.room is self.goal[0]:
-            print(f"Crewmate {self.agent_id} completed their goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
-            self.game_map.add_room_event(self.room, (self.agent_id, self.goal[1]))
-            self.goal = None
 
     def observe(self):
         # TODO: add observations to KM
@@ -82,40 +99,58 @@ class Crewmate(Agent):
     def vote(self):
         pass
 
+    def round_reset(self):
+        pass
+
+    def is_impostor(self):
+        return False
+
 
 class Impostor(Agent):
 
-    def __init__(self, agent_id, num_crew, num_imp, game_map, logger):
+    def __init__(self, agent_id, num_crew, num_imp, game_map, logger, cooldown):
+        self.cooldown = cooldown
+        self.cooldown_ctr = self.cooldown
         super().__init__(agent_id, num_crew, num_imp, game_map, logger)
 
-    def move(self):
-        self.room = self.game_map.move_random(self)
-
     def act(self):
+
         current_room = self.game_map.rooms[self.room]
 
         # TODO: Allow for more than one impostor here.
         # Easiest adjustment: Give each Impostor the ID of each impostor
 
-        num_others = sum(current_room) - 1
+        if self.cooldown_ctr == 0:
+            num_others = sum(current_room) - 1
 
-        if num_others:
-            # TODO: Find a more elegant formula here?
-            threshold = 1 - (num_others / len(current_room))
+            if num_others:
+                # TODO: Find a more elegant formula here?
+                threshold = 1 - (num_others / len(current_room))
 
-            if random.random() < threshold:
-                # Kill!
-                # Select the IDs of all others in the room that are present and are not oneself.
-                # This is easily changed for multiple known impostor IDs
-                present_crewmates = [x for x in range(len(current_room)) if not current_room[x] == 0 and not x == self.agent_id]
+                if random.random() < threshold:
+                    # Kill!
+                    # Select the IDs of all others in the room that are present and are not oneself.
+                    # This is easily changed for multiple known impostor IDs
+                    present_crewmates = [x for x in range(len(current_room)) if
+                                         not current_room[x] == 0 and not x == self.agent_id]
 
-                to_kill = random.sample(present_crewmates, 1)[0]
+                    to_kill = random.sample(present_crewmates, 1)[0]
 
-                self.game_map.add_room_event(self.room, (self.agent_id, f"Kill: {to_kill}"))
+                    self.game_map.add_room_event(self.room, (self.agent_id, f"Kill: {to_kill}"))
 
-                print(f"Impostor {self.agent_id} kills {to_kill}!")
+                    print(f"Impostor {self.agent_id} kills {to_kill}!")
 
-                return to_kill
+                    self.reset_cooldown()
+
+                    return to_kill
+        else:
+            self.cooldown_ctr -= 1
+
+        # Only is called when no kill has occurred.
+        self.__move()
+
+    def __move(self):
+        self.room = self.game_map.move_random(self)
 
     def observe(self):
         # The impostor tells at random, so it does not need to see
@@ -137,4 +172,11 @@ class Impostor(Agent):
 
         return random.sample([x for x in range(total) if not x == self.agent_id], 1)[0]
 
+    def round_reset(self):
+        self.reset_cooldown()
 
+    def is_impostor(self):
+        return True
+
+    def reset_cooldown(self):
+        self.cooldown_ctr = self.cooldown

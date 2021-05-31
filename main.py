@@ -12,7 +12,8 @@ def default_controller(num_crew, num_imp, num_tasks):
     agents = [Crewmate(x, num_crew, num_imp, ss, None, num_tasks) for x in range(num_crew)]
 
     # TODO: Multiple impostor support here
-    agents.append(Impostor(num_crew, num_crew, num_imp, ss, None))
+    COOLDOWN = 5
+    agents.append(Impostor(num_crew, num_crew, num_imp, ss, None, COOLDOWN))
 
     controller = Controller(agents, ss)
 
@@ -25,8 +26,6 @@ if __name__ == "__main__":
     num_tasks = 5
 
     controller = default_controller(num_crew, num_imp, num_tasks)
-
-    print(controller.game_map.nav)
 
     pygame.init()
 

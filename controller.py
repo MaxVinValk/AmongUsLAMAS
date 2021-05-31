@@ -4,7 +4,7 @@ class Controller:
         self.agents = agents
         self.game_map = game_map
 
-        self.phases = ["move", "act", "observe", "discuss", "vote", "check"]
+        self.phases = ["act", "observe", "discuss", "vote", "check"]
         self.phase = 0
 
     # Blegh. Ugly. TODO: Fix Up?
@@ -16,16 +16,20 @@ class Controller:
 
         next_phase = (self.phase + 1) % len(self.phases)
 
-        if phase == "move":
-            [a.move() for a in self.agents]
+        if phase == "act":
 
-        elif phase == "act":
-            act_results = [a.act() for a in self.agents]
-            kills = [result for result in act_results if result is not None]
+            # To allow for more deterministic behaviour, let the impostors go first
+            kills = [a.act() for a in self.agents if a.is_impostor()]
+            kills = [res for res in kills if res is not None]
 
             for result in kills:
                 # A kill has taken place, of the agent whose ID was returned
                 self.__remove_agent_with_id(result)
+
+            # Let the rest act.
+            [a.act() for a in self.agents if not a.is_impostor()]
+
+
 
         elif phase == "observe":
             spotted_corpses = [a.observe() for a in self.agents]
@@ -41,8 +45,13 @@ class Controller:
             # Everyone is moved to the discussion room
             [self.game_map.move_to_meeting_room(a) for a in self.agents]
 
+            # Furthermore, we ask the agents to reset internal variables to start-of-round values, for instance,
+            # the kill cooldown for impostors
+            [a.round_reset() for a in self.agents]
 
             # Discussing takes two phases
+            # TODO: Consider multi-round announcements? It may be the case that after 1 announcement,
+            # another agent will obtain the ability to announce something else. Needs to be investigated further.
             announced = [a.announce() for a in self.agents]
             [a.receive(announced) for a in self.agents]
 
