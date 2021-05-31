@@ -30,11 +30,9 @@ class SimpleSkeldPane(Pane):
         size = self.bg_img.get_size()
         super().__init__(screen, x, y, size[0], size[1], (255, 255, 255))
 
-        room_names = ["Cafeteria", "Medbay", "Upper Engine", "Reactor", "Security", "Lower Engine", "Electrical",
-                      "Storage", "Admin"]
         self.room_coords = [(444, 124), (312, 216), (120, 136), (28, 267), (234, 262), (124, 424), (336, 366),
-                            (474, 440), (624, 340)]
-        self.room_width = [5, 2, 2, 3, 2, 3, 3, 4, 3]
+                            (474, 440), (624, 340), (258, 130), (524, 286), (130, 228), (266, 482)]
+        self.room_width = [5, 2, 2, 3, 2, 3, 3, 4, 3, 5, 2, 2, 4]
 
     def draw(self):
         self.screen.blit(self.bg_img, (self.x, self.y))

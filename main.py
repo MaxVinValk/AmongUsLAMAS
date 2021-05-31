@@ -36,7 +36,7 @@ if __name__ == "__main__":
     panes = []
     panes.append(SimpleSkeldPane(controller, num_imp, screen, 0, 0))
     panes.append(Pane(screen, 768, 0, 256, 1024, (255, 255, 255)))
-    panes.append(Pane(screen, 0, 512, 1024, 256, (64, 64, 64)))
+    panes.append(Pane(screen, 0, 600, 1024, 256, (64, 64, 64)))
 
     clock = pygame.time.Clock()
 
