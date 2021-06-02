@@ -1,11 +1,38 @@
+import copy
+from agent import Crewmate, Impostor, create_agents
+from map import SimpleSkeld
+
+
 class Controller:
 
-    def __init__(self, agents, game_map):
-        self.agents = agents
+    # TODO: Fix this hot mess. Currently the controller needs these pieces of info to create a new agentset
+    # on reset. Perhaps move to a custom function where we can 'init' agents on their own?
+    def __init__(self, game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+
         self.game_map = game_map
+        self.num_crew = num_crew
+        self.num_imp = num_imp
+        self.num_tasks = num_tasks
+        self.cooldown = cooldown
+        self.stat_thres = stat_thres
+        self.logger = logger
+
+        self.agents = []
+        self.reset_agents()
 
         self.phases = ["act", "observe", "discuss", "vote", "check"]
         self.phase = 0
+
+    def reset_agents(self):
+        self.agents = create_agents(self.game_map, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
+                                    self.stat_thres, self.logger)
+
+
+    def reset(self):
+        self.game_map.map_reset()
+        self.reset_agents()
+        self.phase = 0
+
 
     # Blegh. Ugly. TODO: Fix Up?
     def step(self):

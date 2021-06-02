@@ -1,24 +1,8 @@
 import pygame
-
-from controller import Controller
-from agent import Crewmate, Impostor
 from map import SimpleSkeld
-from pane import Pane, SimpleSkeldPane
+from controller import Controller
 
-
-def default_controller(num_crew, num_imp, num_tasks):
-    ss = SimpleSkeld(num_imp + num_crew)
-
-    agents = [Crewmate(x, num_crew, num_imp, ss, None, num_tasks) for x in range(num_crew)]
-
-    # TODO: Multiple impostor support here
-    COOLDOWN = 5
-    STATIONARY_THRESHOLD = 0.8
-    agents.append(Impostor(num_crew, num_crew, num_imp, ss, None, COOLDOWN, STATIONARY_THRESHOLD))
-
-    controller = Controller(agents, ss)
-
-    return controller
+from pane import Pane, SimpleSkeldPane, MenuPane
 
 
 if __name__ == "__main__":
@@ -26,17 +10,23 @@ if __name__ == "__main__":
     num_imp = 1
     num_tasks = 5
 
-    controller = default_controller(num_crew, num_imp, num_tasks)
+    ss = SimpleSkeld(num_imp + num_crew)
+
+    COOLDOWN = 5
+    STATIONARY_THRESHOLD = 0.8
+
+    # TODO: Implement functioning logger instead of passing None
+    controller = Controller(ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
 
     pygame.init()
 
     screen = pygame.display.set_mode([1024, 768])
     pygame.display.set_caption("Sus")
 
-    panes = []
-    panes.append(SimpleSkeldPane(controller, num_imp, screen, 0, 0))
-    panes.append(Pane(screen, 768, 0, 256, 1024, (255, 255, 255)))
-    panes.append(Pane(screen, 0, 600, 1024, 256, (64, 64, 64)))
+    panes = [SimpleSkeldPane(controller, num_imp, screen, 0, 0),
+             MenuPane(controller, screen, 768, 0, 256, 1024, (255, 255, 255)),
+             Pane(controller, screen, 0, 600, 1024, 256, (64, 64, 64))
+             ]
 
     clock = pygame.time.Clock()
 
@@ -49,6 +39,9 @@ if __name__ == "__main__":
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     controller.step()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                [pane.handle_click(pos, event.button) for pane in panes]
 
         screen.fill((255, 255, 255))
 

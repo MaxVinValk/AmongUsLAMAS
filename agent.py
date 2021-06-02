@@ -2,6 +2,16 @@ import random
 from abc import ABC, abstractmethod
 
 
+def create_agents(game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+
+    agents = [Crewmate(x, num_crew, num_imp, game_map, logger, num_tasks) for x in range(num_crew)]
+    # TODO: Multiple impostor support here
+    # noinspection PyTypeChecker
+    agents.append(Impostor(num_crew, num_crew, num_imp, game_map, logger, cooldown, stat_thres))
+
+    return agents
+
+
 class Agent(ABC):
 
     def __init__(self, agent_id, num_crew, num_imp, game_map, logger):

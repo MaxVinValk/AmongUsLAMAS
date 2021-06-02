@@ -15,18 +15,25 @@ class Map(ABC):
         self.tasks = tasks
         self.num_agents = num_agents
 
+        self.rooms = []
+        self.room_events = []
+        self.corpses = []
+
+        self.map_reset()
+
+        # Used for navigation
+        self.nav = self.create_nav()
+
+    def map_reset(self):
         # Keeps track of room occupancy
-        self.rooms = [[0] * num_agents for _ in range(self.room_nums)]
-        self.rooms[self.room_start] = [1] * num_agents
+        self.rooms = [[0] * self.num_agents for _ in range(self.room_nums)]
+        self.rooms[self.room_start] = [1] * self.num_agents
 
         # Keeps track of what events have happened in a room
         self.room_events = [[] for _ in range(self.room_nums)]
 
         # Keeps track of corpses
         self.corpses = [[] for _ in range(self.room_nums)]
-
-        # Used for navigation
-        self.nav = self.create_nav()
 
     def next_toward(self, agent, target):
         self.rooms[agent.room][agent.agent_id] = 0
@@ -111,6 +118,7 @@ class Map(ABC):
             nav.append(reached)
 
         return nav
+
 
 
 '''
