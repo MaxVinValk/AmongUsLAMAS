@@ -59,6 +59,39 @@ class Crewmate(Agent):
         self.tasks = game_map.create_tasks_unique(num_tasks)
         self.goal = None
         self.goal_history = []
+        self.other_is_imposter = {}
+    
+    def update_knowledge_during_game(self, agents):
+
+        # Check which agents are roommates (and which are not)
+        agents_in_same_room = []
+        agents_elswhere = []
+        for a in agents:
+            if(a.agent_id is not self.agent_id):
+                if(a.location_history[-1] is self.location_history[-1]):
+                    agents_in_same_room.append(a)
+                else:
+                    agents_elswhere.append(a)
+
+        if(agents_in_same_room):
+            # Catching the imposter on the body
+            if(self.observe() is True):
+                # One of the people in the room is the imposter, so the others are cleared
+                for a in agents_elswhere:
+                    self.other_is_imposter[a.agent_id] = False 
+
+            # TODO: implement later
+            # Clearing a crewmate by seeing their task:
+            # elif()            
+            # (A1 is in the same room X as A2 at step Y $\land$ A2 performed a visual task in room X at step Y) $\rightarrow$ A1 knows A2 is a crewmate
+
+    def update_knowledge_before_discussion(self):
+    # \item Dead agents must be crewmates: A1 is dead $\rightarrow$ all A know that A1 a crewmate
+        pass
+
+    def update_knowledge_after_discussion(self):
+    # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter 
+        pass
 
     def act(self):
         if self.goal and self.room is self.goal[0]:
