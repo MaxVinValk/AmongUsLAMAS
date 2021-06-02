@@ -22,17 +22,17 @@ class Controller:
 
         self.phases = ["act", "observe", "discuss", "vote", "check"]
         self.phase = 0
+        self.phase_prev = -1
 
     def reset_agents(self):
         self.agents = create_agents(self.game_map, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
                                     self.stat_thres, self.logger)
 
-
     def reset(self):
         self.game_map.map_reset()
         self.reset_agents()
         self.phase = 0
-
+        self.phase_prev = -1
 
     # Blegh. Ugly. TODO: Fix Up?
     def step(self):
@@ -108,3 +108,9 @@ class Controller:
 
         self.game_map.mark_agent_killed(dead_agent)
         self.agents.remove(dead_agent)
+
+    def has_updated(self):
+        if self.phase_prev != self.phase:
+            self.phase_prev = self.phase
+            return True
+        return False
