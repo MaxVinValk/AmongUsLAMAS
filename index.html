@@ -1,1 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="text/javascript"
+  src="https://www.maths.nottingham.ac.uk/plp/pmadw/LaTeXMathML.js">
+  </script>
+  
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
+.top-container {
+  padding: 30px;
+  background-image:url('site_images/AmongUs.jpeg');
+  background-repeat: no-repeat;
+  background-position: center; 
+  background-size: 100%;
+  position: relative;
+  object-fit: cover;
+  width: auto;
+  height: 150px;
+}
+
+.transbox {
+  /* position: center; 
+  width: 300px; */
+  opacity: 0.8;
+  height: 100px;
+  margin: 30px;
+  text-align: center;
+  color: #ffffff;
+  background-color: black;
+}
+
+/* .background {
+  width:100%;
+  height:auto;
+}  */
+
+
+.topnav {
+  overflow: hidden;
+  background-color: #333;
+}
+
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+
+.topnav a.active {
+  background-color: #04AA6D;
+  color: white;
+}
+
+.content {
+  padding: 16px;
+}
+
+.sticky {
+  position: fixed;
+  top: 0;
+  width: 100%;
+}
+
+.sticky + .content {
+  padding-top: 102px;
+}
+</style>
+</head>
+<body>
+
+<div class="top-container">
+  <div class="transbox" >
+  <h1>Among Us</h1>
+  <p>Group 19: Logical Aspects of Multi-Agent Systems.</p>
+  </div>
+</div>
+
+<div class="topnav" id="nav">
+  <a href="#what_is_among_us">Introduction</a>
+  <a href="#kripke_model">Model</a>
+  <a href="#knowledge_types">Knowledge</a>
+  <a href="#reasoning_rules">Rules</a>
+  <a href="#findings">Findings</a>
+  <a href="#technical_details">Technical Details</a>
+  <a href="https://github.com/MaxVinValk/AmongUsLAMAS">GitHub</a>
+</div>
+
+<div class="content">
+  <a id="what_is_among_us"></a>
+  <h3>What is Among Us?</h3>
+  <p>In this game, each agent gets assigned a role: either crewmate or imposter. As a crewmate, your objective is to complete tasks to safe the ship. As an imposter, you have to prevent this from happening by killing the crewmates without anyone noticing.</p>
+  <p>In short, the game exists of two phases: playing and communicating. In the first phase, all agents can walk around a map and perform several actions, such as performing a task to help the ship when you are a crewmate, or killing off a crewmate when you are an imposter. The latter, communication, phase is triggered when a crewmate finds a dead crewmate. In this phase, all agents share their last location and their knowledge about which agents are safe or not. The tricky part here is that the crewmates share this truthfully, but the imposter does not. The crewmates therefore have to figure out who is the corrupt agent by either catching them in the act of killing a crewmate, or catching them in a lie. They also have to reason with the knowledge of the other agents, but they have to watch out not to reason with the false imposter's announcements.</p>
+  
+  <a id="kripke_model"></a>
+  <h3>Kripke Model</h3>
+  <p>Our proposed Kripke model for the overview of the game is relatively simple, as all agents only need to figure out which agent is the imposter. The imposter knows that they are the imposter. Here, all straight lines represent bidirectional arrows. </p>
+  <img src="site_images/KM.jpg" alt="Kripke Model" style="width:auto;height:600px;">
+
+  <a id="knowledge_types"></a>
+  <h3>Knowledge Types</h3>
+  <p>There are however types of knowledge that can be learned throughout the game. Here, a<sub>1</sub> and a<sub>2</sub> $\in$ set of agents A, x<sub>1</sub> and x<sub>2</sub>$\in$ set of rooms X and y $\in$ set of timesteps Y. These are types of knowledge that can be gained by any crewmate while in the action-phase:</p>
+  <ul>
+      <li>The location of an agent (both itself and other agents). For example, a<sub>1</sub> is in room x<sub>1</sub> at time y.</li>
+      <li>Whether an agent performed a visual task. For example, a<sub>1</sub> performed a visual task in room x<sub>1</sub> at time y.</li>
+  </ul>
+  <p>For both of these types of knowledge to be gained, it is important that a crewmate a<sub>1</sub> is in the same room as agent a<sub>2</sub> (where a<sub>1</sub> <span>&#8800;</span>
+     a<sub>2</sub>) at the same time.
+
+      In the discussion phase, all agents encounter two other possible knowledge types:</p>
+  <ul>
+    <li>Whether an agent is dead or alive. For example, a<sub>1</sub> is alive at time y.</li>
+    <li>Announcements of location. For example, a<sub>1</sub> announces that they were in room x at time y.</li>
+
+  </ul>
+  <p> With these different types of knowledge, a crewmate can then reason about the final type of knowledge. Namely, whether another agent is an imposter or not.</p>
+  
+  <a id="reasoning_rules"></a>
+  <h3>Reasoning Rules</h3>
+  <p>There are several rules a crewmate (here a<sub>1</sub>) can use to deduct this final important type of knowledge. They are listed as follows:</p>
+  <ul>
+      <li>Catching the imposter in the act: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>3</sub> is dead) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is the imposter.</li>
+  
+      <li>Catching the imposter in a lie: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at time y $\land$ a<sub>2</sub> announces they were at room x<sub>2</sub> (x<sub>2</sub> <span>&#8800;</span> x<sub>1</sub>) at y) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is the imposter.</li>
+  
+      <li>Clearing a crewmate by seeing their task: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>2</sub> performed a visual task in room x<sub>1</sub> at step y) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is a crewmate.</li>
+  
+      <li>Dead agents must be crewmates: a<sub>1</sub> is dead $\rightarrow$ all a know that a<sub>1</sub> a crewmate.</li>
+   
+      </ul>
+  
+  <p>To model the real game, the imposter will have a cooldown of a set number of rounds on their kill-action. When it is capable of killing a crewmate, this action is stochastic. This means that simply being in the same room as another agent without getting killed does not mean that they are a crewmate. 
+  
+  In our initial knowledge model, the imposter does not yet reason about what the other agents know. We do plan to explore this using higher-order knowledge once the initial project is up and running. </p>
+  <a id="findings"></a>
+  <h3>Findings</h3>
+
+  <a id="technical_details"></a>
+  <h3>Techincal Details</h3>
+
+</div>
+
+<script>
+// The function actually applying the offset
+function offsetAnchor() {
+    if(location.hash.length !== 0) {
+        window.scrollTo(window.scrollX, window.scrollY - 65);
+    }
+}
+
+// This will capture hash changes while on the page
+window.addEventListener("hashchange", offsetAnchor);
+
+// This is here so that when you enter the page with a hash,
+// it can provide the offset in that case too. Having a timeout
+// seems necessary to allow the browser to jump to the anchor first.
+window.setTimeout(offsetAnchor, 1); // The delay of 1 is arbitrary and may not always work right (although it did in my testing).
+
+window.onscroll = function() {myFunction()};
+
+var header = document.getElementById("nav");
+var sticky = header.offsetTop;
+
+function myFunction() {
+  if (window.pageYOffset > sticky) {
+    header.classList.add("sticky");
+  } else {
+    header.classList.remove("sticky");
+  }
+}
+
+function openCity(cityName,elmnt,color) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablink");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].style.backgroundColor = "";
+  }
+  document.getElementById(cityName).style.display = "block";
+  elmnt.style.backgroundColor = color;
+
+}
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();
+</script>
+
+</body>
+</html>
