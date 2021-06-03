@@ -33,8 +33,6 @@ if __name__ == "__main__":
     controller.register_listener(ssp)
     controller.register_listener(ip)
 
-    #ssp.set_agent_click_handler(ip.set_agent_info)
-
     clock = pygame.time.Clock()
 
     running = True

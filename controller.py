@@ -23,7 +23,8 @@ class Controller(LMObject):
 
         self.phases = ["act", "observe", "discuss", "vote", "check"]
         self.phase = 0
-        self.phase_prev = -1
+
+        self.is_game_over = False
 
     def reset_agents(self):
         self.agents = create_agents(self.game_map, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
@@ -33,10 +34,15 @@ class Controller(LMObject):
         self.game_map.map_reset()
         self.reset_agents()
         self.phase = 0
-        self.phase_prev = -1
+        self.is_game_over = False
+        self.send(Message(self, "update", None))
+        self.send(Message(self, "clear", None))
 
     # Blegh. Ugly. TODO: Fix Up?
     def step(self):
+
+        if self.is_game_over:
+            return
 
         phase = self.phases[self.phase]
 
@@ -54,10 +60,13 @@ class Controller(LMObject):
                 # A kill has taken place, of the agent whose ID was returned
                 self.__remove_agent_with_id(result)
 
+                # Check to see how many crewmates have been killed, and if the impostor already won
+                if len(self.agents) <= 2:
+                    self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
+                    self.is_game_over = True
+
             # Let the rest act.
             [a.act() for a in self.agents if not a.is_impostor()]
-
-
 
         elif phase == "observe":
             spotted_corpses = [a.observe() for a in self.agents]
@@ -89,8 +98,15 @@ class Controller(LMObject):
             # TODO: Actually use voting results
 
         elif phase == "check":
-            # TODO: Actually check if the game is over
-            pass
+            imp_found = False
+
+            for a in self.agents:
+                if a.is_impostor():
+                    imp_found = True
+
+            if not imp_found:
+                self.send(Message(self, "game_over", {"victor": "crewmates"}))
+                self.is_game_over = True
 
         self.phase = next_phase
         self.send(Message(self, "update", None))
@@ -110,12 +126,6 @@ class Controller(LMObject):
 
         self.game_map.mark_agent_killed(dead_agent)
         self.agents.remove(dead_agent)
-
-    def has_updated(self):
-        if self.phase_prev != self.phase:
-            self.phase_prev = self.phase
-            return True
-        return False
 
     def get_phase(self):
         return self.phase

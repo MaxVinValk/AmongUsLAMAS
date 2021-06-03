@@ -132,16 +132,6 @@ class SimpleSkeld(Map):
         room_names = ["Cafeteria", "Medbay", "Upper Engine", "Reactor", "Security", "Lower Engine", "Electrical",
                       "Storage", "Admin", "Caf_Med_UpE", "Caf_Adm_Sto", "UpE_LoE_Rea_Sec", "LoE_Ele_Sto"]
 
-        #rooms_adjacent = [[0, 1, 1, 0, 0, 0, 0, 1, 1],
-        #                  [1, 0, 1, 0, 0, 0, 0, 0, 0],
-        #                  [1, 1, 0, 1, 1, 1, 0, 0, 0],
-        #                  [0, 0, 1, 0, 1, 1, 0, 0, 0],
-        #                  [0, 0, 1, 1, 0, 1, 0, 0, 0],
-        #                  [0, 0, 1, 1, 1, 0, 1, 1, 0],
-        #                  [0, 0, 0, 0, 0, 1, 0, 1, 0],
-        #                  [1, 0, 0, 0, 0, 1, 1, 0, 1],
-        #                  [1, 0, 0, 0, 0, 0, 0, 1, 0]]
-
         rooms_adjacent = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],  # Cafeteria
                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],  # Medbay
                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],  # Upper Engine

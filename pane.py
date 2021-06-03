@@ -111,11 +111,16 @@ class SimpleSkeldPane(Pane):
 
     def handle_click(self, pos, mouse_button):
         if super().handle_click(pos, mouse_button):
+            clicked_agent = False
             for a in self.sprites_to_draw:
                 if a.x <= pos[0] < (a.x + a.w):
                     if a.y <= pos[1] < (a.y + a.h):
                         print(f"You just clicked on agent: {a.agent_id}")
                         self.send(Message(self, "agent_clicked", {"agent_id" : a.agent_id}))
+                        clicked_agent = True
+
+            if not clicked_agent:
+                self.send(Message(self, "clear", None))
 
     def receive(self, message):
         if message.name == "update":
@@ -161,4 +166,8 @@ class InfoPane(Pane):
         elif message.name == "update":
             if self.last_selected != -1:
                 self.set_agent_info(self.last_selected)
+        elif message.name == "game_over":
+            self.multi_line.set_lines(["Game over!", f"The game was won by the {message.information['victor']}!"])
+        elif message.name == "clear":
+            self.multi_line.set_lines([])
 
