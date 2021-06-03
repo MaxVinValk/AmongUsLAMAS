@@ -2,7 +2,7 @@ import pygame
 from map import SimpleSkeld
 from controller import Controller
 
-from pane import Pane, SimpleSkeldPane, MenuPane
+from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane
 
 
 if __name__ == "__main__":
@@ -23,10 +23,17 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode([1024, 768])
     pygame.display.set_caption("Sus")
 
-    panes = [SimpleSkeldPane(controller, num_imp, screen, 0, 0),
-             MenuPane(controller, screen, 768, 0, 256, 1024, (255, 255, 255)),
-             Pane(controller, screen, 0, 600, 1024, 256, (64, 64, 64))
-             ]
+    ssp = SimpleSkeldPane(controller, num_imp, screen, 0, 0)
+    mp = MenuPane(controller, screen, 768, 0, 256, 1024, (255, 255, 255))
+    ip = InfoPane(controller, screen, 0, 600, 1024, 256, (64, 64, 64))
+
+    panes = [ssp, mp, ip]
+
+    ssp.register_listener(ip)
+    controller.register_listener(ssp)
+    controller.register_listener(ip)
+
+    #ssp.set_agent_click_handler(ip.set_agent_info)
 
     clock = pygame.time.Clock()
 
@@ -48,5 +55,4 @@ if __name__ == "__main__":
         [pane.draw() for pane in panes]
 
         pygame.display.flip()
-
         clock.tick(30)

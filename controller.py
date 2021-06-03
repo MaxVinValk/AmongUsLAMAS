@@ -1,13 +1,14 @@
 import copy
 from agent import Crewmate, Impostor, create_agents
 from map import SimpleSkeld
+from util.util import Message, LMObject
 
-
-class Controller:
+class Controller(LMObject):
 
     # TODO: Fix this hot mess. Currently the controller needs these pieces of info to create a new agentset
     # on reset. Perhaps move to a custom function where we can 'init' agents on their own?
     def __init__(self, game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+        super().__init__()
 
         self.game_map = game_map
         self.num_crew = num_crew
@@ -92,6 +93,7 @@ class Controller:
             pass
 
         self.phase = next_phase
+        self.send(Message(self, "update", None))
 
     def __remove_agent_with_id(self, agent_id):
 
@@ -114,3 +116,15 @@ class Controller:
             self.phase_prev = self.phase
             return True
         return False
+
+    def get_phase(self):
+        return self.phase
+
+    def get_agent_with_id(self, agent_id):
+        for a in self.agents:
+            if a.agent_id is agent_id:
+                return a
+        return None
+
+    def receive(self, message):
+        pass

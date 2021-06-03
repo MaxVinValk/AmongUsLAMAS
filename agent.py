@@ -60,6 +60,10 @@ class Agent(ABC):
     def is_alive(self):
         return self.alive
 
+    @abstractmethod
+    def get_info(self):
+        pass
+
 
 class Crewmate(Agent):
 
@@ -131,6 +135,21 @@ class Crewmate(Agent):
     def round_reset(self):
         super().round_reset()
         self.goal_history.clear()
+
+    def get_info(self):
+
+        goal_line = ""
+        if self.goal == None:
+            goal_line = "No current goal"
+        else:
+            goal_line = f"Current goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}"
+
+        return [
+            f"Agent {self.agent_id} (Crewmate)",
+            goal_line,
+            f"Goals left: {len(self.tasks)}",
+            f"Loc. Hist: {self.location_history}"
+        ]
 
 
 class Impostor(Agent):
@@ -216,3 +235,9 @@ class Impostor(Agent):
 
     def reset_cooldown(self):
         self.cooldown_ctr = self.cooldown
+
+    def get_info(self):
+        return [
+            f"Agent {self.agent_id} (Impostor)",
+            f"Loc. His: {self.location_history}"
+        ]

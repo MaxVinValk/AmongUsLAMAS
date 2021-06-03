@@ -32,7 +32,6 @@ class GUIElement(ABC):
     def draw(self):
         pass
 
-    @abstractmethod
     def handle_click(self, pos, mouse_button):
         pass
 
@@ -69,3 +68,33 @@ class Button(GUIElement):
         if self.in_bounds(pos):
             self.on_click()
 
+
+class MultiLine(GUIElement):
+
+    def __init__(self, screen, x, y, w, h, num_lines, line_spacing, font, color):
+        super().__init__(screen, x, y, w, h)
+        self.num_lines = num_lines
+        self.spacing = line_spacing
+        self.font = font
+        self.color = color
+
+        self.text = ["" for _ in range(num_lines)]
+        self.text_images = [self.font.render(self.text[i], True, color) for i in range(num_lines)]
+
+    def set_line(self, line_no, text):
+        self.text[line_no] = text
+        self.text_images[line_no] = self.font.render(text, True, self.color)
+
+    def set_lines(self, lines):
+        assert(len(lines) <= self.num_lines)
+
+        for i in range(len(lines)):
+            self.set_line(i, lines[i])
+
+        for i in range(len(lines), self.num_lines):
+            self.set_line(i, "")
+
+    def draw(self):
+
+        for i, text_img in enumerate(self.text_images):
+            self.screen.blit(text_img, (self.x + 16, self.y + 16 + i * self.spacing))

@@ -1,10 +1,12 @@
 import pygame
-from gui.gui_element import Button, GUIElement, get_default_gui_font
+from gui.gui_element import Button, MultiLine, get_default_gui_font
+from util.util import LMObject, Message
 
 
-class Pane:
+class Pane(LMObject):
 
     def __init__(self, controller, screen, x, y, w, h, color):
+        super().__init__()
         self.controller = controller
         self.screen = screen
         self.x = x
@@ -30,6 +32,9 @@ class Pane:
         [g.handle_click(pos, mouse_button) for g in self.gui_elements]
 
         return True
+
+    def receive(self, message):
+        pass
 
 
 class SimpleSkeldPane(Pane):
@@ -67,9 +72,6 @@ class SimpleSkeldPane(Pane):
 
     def draw(self):
         self.screen.blit(self.bg_img, (self.x, self.y))
-
-        if self.controller.has_updated():
-            self.draw_update()
 
         [s.draw(self.screen) for s in self.sprites_to_draw]
 
@@ -113,9 +115,11 @@ class SimpleSkeldPane(Pane):
                 if a.x <= pos[0] < (a.x + a.w):
                     if a.y <= pos[1] < (a.y + a.h):
                         print(f"You just clicked on agent: {a.agent_id}")
-                        # Allows for setting a selected agent here, which can be used by a different panel to display
-                        # info
+                        self.send(Message(self, "agent_clicked", {"agent_id" : a.agent_id}))
 
+    def receive(self, message):
+        if message.name == "update":
+            self.draw_update()
 
 
 class MenuPane(Pane):
@@ -125,3 +129,36 @@ class MenuPane(Pane):
 
         self.add_gui_element(Button(screen, x + 8, y + 32, 128, 32, "Reset", self.controller.reset))
         self.add_gui_element(Button(screen, x + 8, y + 72, 128, 32, "Step", self.controller.step))
+
+
+class InfoPane(Pane):
+
+    def __init__(self, controller, screen, x, y, w, h, color):
+        super().__init__(controller, screen, x, y, w, h, color)
+        self.font = pygame.font.SysFont("arial", 20)
+
+        self.multi_line = MultiLine(screen, x, y, w, h, 5, 28, get_default_gui_font(), (255, 255, 255))
+        self.add_gui_element(self.multi_line)
+
+        self.last_selected = -1
+
+    def set_agent_info(self, agent_id):
+        agent = self.controller.get_agent_with_id(agent_id)
+
+        # If the agent has been murdered, then we get nothing back
+        if agent is None:
+            self.last_selected = -1
+            self.multi_line.set_lines(["An ex-crewmate", "Its metabolic processes are now history!", "He kicked the bucket",
+                                       "Run down the curtain,", "and joined the bleedin' choir invisible!"])
+        else:
+            info = agent.get_info()
+            self.multi_line.set_lines(info)
+
+    def receive(self, message):
+        if message.name == "agent_clicked":
+            self.last_selected = message.information["agent_id"]
+            self.set_agent_info(self.last_selected)
+        elif message.name == "update":
+            if self.last_selected != -1:
+                self.set_agent_info(self.last_selected)
+
