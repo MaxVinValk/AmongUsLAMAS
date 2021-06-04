@@ -7,9 +7,10 @@ class Controller(LMObject):
 
     # TODO: Fix this hot mess. Currently the controller needs these pieces of info to create a new agentset
     # on reset. Perhaps move to a custom function where we can 'init' agents on their own?
-    def __init__(self, game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+    def __init__(self, km, game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
         super().__init__()
 
+        self.km = km
         self.game_map = game_map
         self.num_crew = num_crew
         self.num_imp = num_imp
@@ -69,14 +70,23 @@ class Controller(LMObject):
             [a.act() for a in self.agents if not a.is_impostor()]
 
         elif phase == "observe":
-            spotted_corpses = [a.observe() for a in self.agents]
+            spotted_corpses = [a.observe(self.km, self.agents) for a in self.agents]
             self.game_map.reset_room_events()
 
-            if True not in spotted_corpses:
+            corpse_has_been_found = False
+
+            for return_val in spotted_corpses:
+                if return_val != -1:
+                    corpse_has_been_found = True
+                    for a in self.agents:
+                        if not a.is_impostor():
+                            self.km.update_known_crewmate(a.agent_id, return_val)
+
+            if not corpse_has_been_found:
                 next_phase = 0
 
             # Update Crewmate Knowledge about what happens in their current room
-            [a.update_knowledge_during_game(self.agents) for a in self.agents if not a.is_impostor()]
+            #[a.update_knowledge_during_game(self.agents) for a in self.agents if not a.is_impostor()]
 
         elif phase == "discuss":
             # Update Crewmate Knowledge about who died

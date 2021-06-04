@@ -31,7 +31,7 @@ class Agent(ABC):
         pass
 
     @abstractmethod
-    def observe(self):
+    def observe(self, km, agents):
         pass
 
     @abstractmethod
@@ -74,36 +74,13 @@ class Crewmate(Agent):
         self.goal = None
         self.goal_history = []
         self.other_is_imposter = {}
-    
-    def update_knowledge_during_game(self, agents):
 
-        # Check which agents are roommates (and which are not)
-        agents_in_same_room = []
-        agents_elswhere = []
-        for a in agents:
-            if(a.agent_id is not self.agent_id):
-                if(a.location_history[-1] is self.location_history[-1]):
-                    agents_in_same_room.append(a)
-                else:
-                    agents_elswhere.append(a)
+    def update_knowledge_before_discussion(self, km):
 
-        if(agents_in_same_room):
-            # Catching the imposter on the body
-            if(self.observe() is True):
-                # One of the people in the room is the imposter, so the others are cleared
-                for a in agents_elswhere:
-                    self.other_is_imposter[a.agent_id] = False 
-
-            # TODO: implement later
-            # Clearing a crewmate by seeing their task:
-            # elif()            
-            # (A1 is in the same room X as A2 at step Y $\land$ A2 performed a visual task in room X at step Y) $\rightarrow$ A1 knows A2 is a crewmate
-
-    def update_knowledge_before_discussion(self):
     # \item Dead agents must be crewmates: A1 is dead $\rightarrow$ all A know that A1 a crewmate
         pass
 
-    def update_knowledge_after_discussion(self):
+    def update_knowledge_after_discussion(self, ):
     # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter 
         pass
 
@@ -139,7 +116,7 @@ class Crewmate(Agent):
         self.location_history.append(self.room)
 
 
-    def observe(self):
+    def observe(self, km, agents):
         # TODO: add observations to KM
 
         # After acting, it is guaranteed that there are at least 2 rooms in memory.
@@ -149,9 +126,44 @@ class Crewmate(Agent):
         # origin_room_evts now contains events in both rooms
         origin_room_evts.extend(target_room_evts)
 
+        corpse_found = -1
+        kill_witnessed = False
+
         for evt in origin_room_evts:
-            if evt[1].startswith("Corpse"):
-                return True
+
+            if evt[1].startswith("Kill"):
+                kill_witnessed = True
+            elif evt[1].startswith("Corpse"):
+                corpse_found = evt[0]
+
+        self.update_knowledge_during_game(km, agents, kill_witnessed)
+        return corpse_found
+
+    def update_knowledge_during_game(self, km, agents, kill_witnessed):
+
+        # Check which agents are roommates (and which are not)
+        agents_in_same_room = []
+        agents_elswhere = []
+        for a in agents:
+            if a.agent_id is not self.agent_id:
+                if a.location_history[-1] is self.location_history[-1]:
+                    agents_in_same_room.append(a)
+                else:
+                    agents_elswhere.append(a)
+
+        if agents_in_same_room:
+            # Catching the imposter on the body
+            if kill_witnessed:
+                # One of the people in the room is the imposter, so the others are cleared
+                for a in agents_elswhere:
+                    #self.other_is_imposter[a.agent_id] = False
+                    km.update_known_crewmate(self.agent_id, a.agent_id)
+
+            # TODO: implement later
+            # Clearing a crewmate by seeing their task:
+            # elif()
+            # (A1 is in the same room X as A2 at step Y $\land$ A2 performed a visual task in room X at step Y) $\rightarrow$ A1 knows A2 is a crewmate
+
 
     def announce(self):
         pass
@@ -239,9 +251,9 @@ class Impostor(Agent):
         self.location_history.append(self.room)
 
 
-    def observe(self):
+    def observe(self, km, agents):
         # The impostor tells at random, so it does not need to see
-        pass
+        return -1
 
     def announce(self):
         # TODO: Announce something at random
