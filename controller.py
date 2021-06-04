@@ -49,7 +49,7 @@ class Controller(LMObject):
         print(phase)
 
         next_phase = (self.phase + 1) % len(self.phases)
-
+        
         if phase == "act":
 
             # To allow for more deterministic behaviour, let the impostors go first
@@ -75,7 +75,12 @@ class Controller(LMObject):
             if True not in spotted_corpses:
                 next_phase = 0
 
+            # Update Crewmate Knowledge about what happens in their current room
+            [a.update_knowledge_during_game(self.agents) for a in self.agents if not a.is_impostor()]
+
         elif phase == "discuss":
+            # Update Crewmate Knowledge about who died
+            [a.update_knowledge_before_discussion(self.agents) for a in self.agents if not a.is_impostor()]
             # If we have reached this phase, it is because at least 1 corpse has been found. Thus, we clear all corpses
             self.game_map.clear_corpses()
 
@@ -91,6 +96,9 @@ class Controller(LMObject):
             # another agent will obtain the ability to announce something else. Needs to be investigated further.
             announced = [a.announce() for a in self.agents]
             [a.receive(announced) for a in self.agents]
+
+            # Update Crewmate Knowledge about who possibly lied
+            [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
 
         elif phase == "vote":
             votes = [a.vote() for a in self.agents]
