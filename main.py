@@ -3,7 +3,7 @@ from map import SimpleSkeld
 from controller import Controller
 
 from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane
-
+from mlsolver.model import AmongUs as KripkeModel
 
 if __name__ == "__main__":
     num_crew = 4
@@ -15,8 +15,10 @@ if __name__ == "__main__":
     COOLDOWN = 5
     STATIONARY_THRESHOLD = 0.8
 
+    km = KripkeModel(num_crew, num_crew)
+
     # TODO: Implement functioning logger instead of passing None
-    controller = Controller(ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
+    controller = Controller(km, ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
 
     pygame.init()
 
