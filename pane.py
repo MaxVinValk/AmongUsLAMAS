@@ -129,11 +129,12 @@ class SimpleSkeldPane(Pane):
 
 class MenuPane(Pane):
 
-    def __init__(self, tab_manager, controller, screen, x, y, w, h, color):
+    def __init__(self, km, tab_manager, controller, screen, x, y, w, h, color):
         super().__init__(controller, screen, x, y, w, h, color)
 
         reset_btn = Button(screen, x + 8, y + 32, 128, 32, "Reset", "reset", None)
         reset_btn.register_listener(controller)
+        reset_btn.register_listener(km)
         self.add_gui_element(reset_btn)
 
         step_btn = Button(screen, x + 8, y + 72, 128, 32, "Step", "step", None)
@@ -183,12 +184,12 @@ class InfoPane(Pane):
 
 class KripkePane(Pane):
 
-    def __init__(self, km, tm, controller, screen, x, y, w, h, color):
+    def __init__(self, km, tab_manager, controller, screen, x, y, w, h, color):
         super().__init__(controller, screen, x, y, w, h, color)
         self.km = km
 
         switch_back_btn = Button(screen, 800, 700, 128, 32, "Switch back", "switch", {"target": 0})
-        switch_back_btn.register_listener(tm)
+        switch_back_btn.register_listener(tab_manager)
         self.add_gui_element(switch_back_btn)
 
     def draw(self):

@@ -1,9 +1,12 @@
-import copy
 from agent import Crewmate, Impostor, create_agents
-from map import SimpleSkeld
 from util.util import Message, LMObject
 
+
 class Controller(LMObject):
+    """
+        Handles the simulation flow. The simulation occurs in steps, and the flow of the simulation is handled
+        by the controller. It is also responsible for checking whether or not the game is over
+    """
 
     # TODO: Fix this hot mess. Currently the controller needs these pieces of info to create a new agentset
     # on reset. Perhaps move to a custom function where we can 'init' agents on their own?
@@ -32,6 +35,7 @@ class Controller(LMObject):
                                     self.stat_thres, self.logger)
 
     def reset(self):
+        """Resets the simulation"""
         self.game_map.map_reset()
         self.reset_agents()
         self.phase = 0
@@ -39,18 +43,16 @@ class Controller(LMObject):
         self.send(Message(self, "update", None))
         self.send(Message(self, "clear", None))
 
-    # Blegh. Ugly. TODO: Fix Up?
     def step(self):
 
         if self.is_game_over:
             return
 
         phase = self.phases[self.phase]
-
         print(phase)
 
         next_phase = (self.phase + 1) % len(self.phases)
-        
+
         if phase == "act":
 
             # To allow for more deterministic behaviour, let the impostors go first
@@ -85,12 +87,7 @@ class Controller(LMObject):
             if not corpse_has_been_found:
                 next_phase = 0
 
-            # Update Crewmate Knowledge about what happens in their current room
-            #[a.update_knowledge_during_game(self.agents) for a in self.agents if not a.is_impostor()]
-
         elif phase == "discuss":
-            # Update Crewmate Knowledge about who died
-            # [a.update_knowledge_before_discussion(self.agents) for a in self.agents if not a.is_impostor()]
             # If we have reached this phase, it is because at least 1 corpse has been found. Thus, we clear all corpses
             self.game_map.clear_corpses()
 
@@ -107,7 +104,7 @@ class Controller(LMObject):
             announced = [a.announce() for a in self.agents]
             [a.receive(announced) for a in self.agents]
 
-            # Update Crewmate Knowledge about who possibly lied
+            # Update Crewmate Knowledge about who possibly lied?
             # [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
 
         elif phase == "vote":

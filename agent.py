@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 
 def create_agents(game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
-
+    """Utility function to create an agent set with tasks, impostors"""
     agents = [Crewmate(x, num_crew, num_imp, game_map, logger, num_tasks) for x in range(num_crew)]
     # TODO: Multiple impostor support here
     # noinspection PyTypeChecker
@@ -13,7 +13,9 @@ def create_agents(game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, 
 
 
 class Agent(ABC):
-
+    """
+    An abstract class which contains all functions an agent must have in order to ensure a proper simulation flow
+    """
     def __init__(self, agent_id, num_crew, num_imp, game_map, logger):
         self.agent_id = agent_id
         self.game_map = game_map
@@ -46,8 +48,8 @@ class Agent(ABC):
     def vote(self):
         pass
 
-    # Meant to run any logic associated with resetting a round.
     def round_reset(self):
+        """Runs logic associated with resetting this agent for the next round"""
         self.location_history.clear()
 
         # Keep the current room as the position we have been in for two timeframes for later
@@ -66,6 +68,9 @@ class Agent(ABC):
 
 
 class Crewmate(Agent):
+    """
+    This class provides the behaviour of a crewmate in all phases of the simulation
+    """
 
     def __init__(self, agent_id, num_crew, num_imp, game_map, logger, num_tasks):
         super().__init__(agent_id, num_crew, num_imp, game_map, logger)
@@ -75,16 +80,19 @@ class Crewmate(Agent):
         self.goal_history = []
         self.other_is_imposter = {}
 
+    # TODO
     def update_knowledge_before_discussion(self, km):
-
-    # \item Dead agents must be crewmates: A1 is dead $\rightarrow$ all A know that A1 a crewmate
+        # \item Dead agents must be crewmates: A1 is dead $\rightarrow$ all A know that A1 a crewmate
         pass
 
+    # TODO
     def update_knowledge_after_discussion(self, ):
-    # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter 
+        # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces
+        # they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter
         pass
 
     def act(self):
+        """Try to complete the goal that is currently set, or else move"""
         if self.goal and self.room is self.goal[0]:
             print(
                 f"Crewmate {self.agent_id} completed their goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
@@ -98,6 +106,7 @@ class Crewmate(Agent):
 
     # Set a goal if we have none and there are tasks left, and move toward it if we have it
     def __move(self):
+        """Move toward the goal if we have one, set one if not, and if no goals are left, move randomly"""
         if self.goal is None:
             if self.tasks:
                 self.goal = self.tasks.pop()
@@ -117,7 +126,7 @@ class Crewmate(Agent):
 
 
     def observe(self, km, agents):
-        # TODO: add observations to KM
+        """Observe the current room, the previous room, and all events that occurred there"""
 
         # After acting, it is guaranteed that there are at least 2 rooms in memory.
         origin_room_evts = self.game_map.get_room_events(self.location_history[-2])
@@ -134,7 +143,7 @@ class Crewmate(Agent):
             if evt[1].startswith("Kill"):
                 kill_witnessed = True
             elif evt[1].startswith("Corpse"):
-                corpse_found = evt[0]
+                corpse_found = evt[0] # This is the ID of the agent that is found dead
 
         self.update_knowledge_during_game(km, agents, kill_witnessed)
         return corpse_found
@@ -163,7 +172,6 @@ class Crewmate(Agent):
             # Clearing a crewmate by seeing their task:
             # elif()
             # (A1 is in the same room X as A2 at step Y $\land$ A2 performed a visual task in room X at step Y) $\rightarrow$ A1 knows A2 is a crewmate
-
 
     def announce(self):
         pass
@@ -209,6 +217,7 @@ class Impostor(Agent):
         super().__init__(agent_id, num_crew, num_imp, game_map, logger)
 
     def act(self):
+        """Try to kill if possible, otherwise, move about randomly"""
 
         current_room = self.game_map.rooms[self.room]
 
@@ -249,7 +258,6 @@ class Impostor(Agent):
             self.room = self.game_map.move_random(self)
 
         self.location_history.append(self.room)
-
 
     def observe(self, km, agents):
         # The impostor tells at random, so it does not need to see

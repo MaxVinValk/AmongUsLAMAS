@@ -11,6 +11,7 @@ if __name__ == "__main__":
     num_imp = 1
     num_tasks = 5
 
+    # The map we want to use
     ss = SimpleSkeld(num_imp + num_crew)
 
     COOLDOWN = 5
@@ -19,6 +20,8 @@ if __name__ == "__main__":
     km = KripkeModel(num_crew + num_imp, num_crew)
 
     # TODO: Implement functioning logger instead of passing None
+
+    # The controller controls the simulation flow
     controller = Controller(km, ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
 
     pygame.init()
@@ -26,13 +29,12 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode([1024, 768])
     pygame.display.set_caption("Sus")
 
+    # The tab manager is for drawing utility, and each pane something to be drawn on the screen
     tm = TabManager()
 
     ssp = SimpleSkeldPane(controller, num_imp, screen, 0, 0)
-    mp = MenuPane(tm, controller, screen, 768, 0, 256, 1024, (255, 255, 255))
+    mp = MenuPane(km, tm, controller, screen, 768, 0, 256, 1024, (255, 255, 255))
     ip = InfoPane(controller, screen, 0, 600, 1024, 256, (64, 64, 64))
-
-
 
     main_tab = [ssp, mp, ip]
 
@@ -43,6 +45,7 @@ if __name__ == "__main__":
     tm.add_tab(main_tab)
     tm.add_tab(kripke_tab)
 
+    # Registering listeners for message passing
     ssp.register_listener(ip)
     controller.register_listener(ssp)
     controller.register_listener(ip)

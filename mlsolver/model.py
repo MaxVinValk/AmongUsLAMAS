@@ -3,6 +3,7 @@
 Module contains a simple Kripke model for Among Us and 
 """
 
+from util.util import LMObject
 from mlsolver.kripke import KripkeStructure, World
 from mlsolver.formula import Atom, And, Not, Or, Box_a, Box_star
 import numpy as np
@@ -89,15 +90,21 @@ def fixed_layout_graphviz(worlds, point, connectivity, r=2, label_pos=0.25):
     return dot
 
 
-class AmongUs(object):
+class AmongUs(LMObject):
     def __init__(self, num_agents, imposter):
+        self.num_agents = num_agents
+        self.imposter = imposter
+
+        self.setup()
+
+    def setup(self):
         self.worlds = []
         self.relations = {}
 
         # Build the same number of worlds as there are agents. Each world has one imposter
-        for i in range(num_agents):
+        for i in range(self.num_agents):
             agent_is_imposter = {}
-            for j in range(num_agents):
+            for j in range(self.num_agents):
                 if i == j:
                     agent_is_imposter["IsImp:{}".format(j)] = True
                 else:
@@ -109,15 +116,15 @@ class AmongUs(object):
         # Each agent knows whether they themselves are imposter or not
         # This leads to crewmates not having accessibility to the worlds where they are imposter
         # This leads to imposters only having a reflexive relation to themselves
-        for i in range(num_agents):
+        for i in range(self.num_agents):
             self.relations[str(i)] = set(
-                ("Imp{}".format(x), "Imp{}".format(y)) for x in range(num_agents) for y in range(num_agents) if
+                ("Imp{}".format(x), "Imp{}".format(y)) for x in range(self.num_agents) for y in range(self.num_agents) if
                 ((i != x) and (i != y)))
         # print(self.relations)
         self.relations.update(add_symmetric_edges(self.relations))
         self.relations.update(add_reflexive_edges(self.worlds, self.relations))
         self.kripke_structure = KripkeStructure(self.worlds, self.relations)
-        self.real_world = "Imp{}".format(imposter)
+        self.real_world = "Imp{}".format(self.imposter)
 
     def suspects(self, observer, other):
         """ Check if agent i suspects agent j of being the impostor
@@ -169,6 +176,10 @@ class AmongUs(object):
                 return img
         else:
             return dot
+
+    def receive(self, message):
+        if message.name == "reset":
+            self.setup()
 
 
 if __name__ == "__main__":
