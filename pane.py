@@ -129,11 +129,20 @@ class SimpleSkeldPane(Pane):
 
 class MenuPane(Pane):
 
-    def __init__(self, controller, screen, x, y, w, h, color):
+    def __init__(self, tab_manager, controller, screen, x, y, w, h, color):
         super().__init__(controller, screen, x, y, w, h, color)
 
-        self.add_gui_element(Button(screen, x + 8, y + 32, 128, 32, "Reset", self.controller.reset))
-        self.add_gui_element(Button(screen, x + 8, y + 72, 128, 32, "Step", self.controller.step))
+        reset_btn = Button(screen, x + 8, y + 32, 128, 32, "Reset", "reset", None)
+        reset_btn.register_listener(controller)
+        self.add_gui_element(reset_btn)
+
+        step_btn = Button(screen, x + 8, y + 72, 128, 32, "Step", "step", None)
+        step_btn.register_listener(controller)
+        self.add_gui_element(step_btn)
+
+        show_kripke_btn = Button(screen, x + 8, y + 112, 128, 32, "Show KM", "switch", {"target": 1})
+        show_kripke_btn.register_listener(tab_manager)
+        self.add_gui_element(show_kripke_btn)
 
 
 class InfoPane(Pane):
@@ -170,4 +179,20 @@ class InfoPane(Pane):
             self.multi_line.set_lines(["Game over!", f"The game was won by the {message.information['victor']}!"])
         elif message.name == "clear":
             self.multi_line.set_lines([])
+
+
+class KripkePane(Pane):
+
+    def __init__(self, km, tm, controller, screen, x, y, w, h, color):
+        super().__init__(controller, screen, x, y, w, h, color)
+        self.km = km
+
+        switch_back_btn = Button(screen, 800, 700, 128, 32, "Switch back", "switch", {"target": 0})
+        switch_back_btn.register_listener(tm)
+        self.add_gui_element(switch_back_btn)
+
+    def draw(self):
+        super().draw()
+        kripke_img = self.km.plot_fixed()
+        self.screen.blit(kripke_img, (312, 128))
 

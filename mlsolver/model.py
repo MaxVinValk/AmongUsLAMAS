@@ -148,7 +148,7 @@ class AmongUs(object):
             world_id[w.name] = i
             worlds.append(w.name)
         connectivity = {}
-        for agent, relations in model.kripke_structure.relations.items():
+        for agent, relations in self.kripke_structure.relations.items():
             for (start, end) in relations:
                 (start, end) = (min(start, end), max(start, end))
                 if start == end:

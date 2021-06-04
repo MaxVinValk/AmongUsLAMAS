@@ -155,4 +155,7 @@ class Controller(LMObject):
         return None
 
     def receive(self, message):
-        pass
+        if message.name == "step":
+            self.step()
+        elif message.name == "reset":
+            self.reset()

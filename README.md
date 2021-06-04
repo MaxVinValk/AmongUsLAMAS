@@ -14,7 +14,7 @@ sudo apt install graphviz
 
 The code also depends on [mlsolver](https://github.com/erohkohl/mlsolver) which is included in the repository. 
 
-# Setup an running
+# Setup and running
 
 After cloning the repository no additional setup is required. The simulation can be ran by executing
 

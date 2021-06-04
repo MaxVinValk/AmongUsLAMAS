@@ -2,7 +2,8 @@ import pygame
 from map import SimpleSkeld
 from controller import Controller
 
-from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane
+from gui.tabmanager import TabManager
+from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane, KripkePane
 from mlsolver.model import AmongUs as KripkeModel
 
 if __name__ == "__main__":
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     COOLDOWN = 5
     STATIONARY_THRESHOLD = 0.8
 
-    km = KripkeModel(num_crew, num_crew)
+    km = KripkeModel(num_crew + num_imp, num_crew)
 
     # TODO: Implement functioning logger instead of passing None
     controller = Controller(km, ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
@@ -25,11 +26,22 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode([1024, 768])
     pygame.display.set_caption("Sus")
 
+    tm = TabManager()
+
     ssp = SimpleSkeldPane(controller, num_imp, screen, 0, 0)
-    mp = MenuPane(controller, screen, 768, 0, 256, 1024, (255, 255, 255))
+    mp = MenuPane(tm, controller, screen, 768, 0, 256, 1024, (255, 255, 255))
     ip = InfoPane(controller, screen, 0, 600, 1024, 256, (64, 64, 64))
 
-    panes = [ssp, mp, ip]
+
+
+    main_tab = [ssp, mp, ip]
+
+    kp = KripkePane(km, tm, controller, screen, 0, 0, 1024, 768, (255, 255, 255))
+
+    kripke_tab = [kp]
+
+    tm.add_tab(main_tab)
+    tm.add_tab(kripke_tab)
 
     ssp.register_listener(ip)
     controller.register_listener(ssp)
@@ -48,11 +60,11 @@ if __name__ == "__main__":
                     controller.step()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
-                [pane.handle_click(pos, event.button) for pane in panes]
+                tm.handle_click(pos, event.button)
 
         screen.fill((255, 255, 255))
 
-        [pane.draw() for pane in panes]
+        tm.draw()
 
         pygame.display.flip()
         clock.tick(30)

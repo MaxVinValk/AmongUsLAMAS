@@ -1,6 +1,6 @@
 import pygame
 from abc import ABC, abstractmethod
-
+from util.util import Message, LMObject
 
 '''
     The reason for this construction is that before pygame is initialized, you cannot create a font with pygame.font,
@@ -19,9 +19,10 @@ def get_default_gui_font():
     return DEFAULT_GUI_FONT
 
 
-class GUIElement(ABC):
+class GUIElement(LMObject):
 
     def __init__(self, screen, x, y, w, h):
+        super().__init__()
         self.screen = screen
         self.x = x
         self.y = y
@@ -43,14 +44,18 @@ class GUIElement(ABC):
 
         return True
 
+    def receive(self, message):
+        pass
+
 
 class Button(GUIElement):
 
-    def __init__(self, screen, x, y, w, h, text, on_click):
+    def __init__(self, screen, x, y, w, h, text, on_click_message_name, on_click_message_info):
         super().__init__(screen, x, y, w, h)
         self.text = text
         self.text_img = get_default_gui_font().render(text, True, (255, 255, 255))
-        self.on_click = on_click
+        self.on_click_message_name = on_click_message_name
+        self.on_click_message_info = on_click_message_info
 
     def update_text(self, new_text, font=None):
 
@@ -66,7 +71,7 @@ class Button(GUIElement):
 
     def handle_click(self, pos, mouse_button):
         if self.in_bounds(pos):
-            self.on_click()
+            self.send(Message(self, self.on_click_message_name, self.on_click_message_info))
 
 
 class MultiLine(GUIElement):
