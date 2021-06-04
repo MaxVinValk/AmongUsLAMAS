@@ -80,7 +80,7 @@ class Controller(LMObject):
 
         elif phase == "discuss":
             # Update Crewmate Knowledge about who died
-            [a.update_knowledge_before_discussion(self.agents) for a in self.agents if not a.is_impostor()]
+            # [a.update_knowledge_before_discussion(self.agents) for a in self.agents if not a.is_impostor()]
             # If we have reached this phase, it is because at least 1 corpse has been found. Thus, we clear all corpses
             self.game_map.clear_corpses()
 
@@ -98,7 +98,7 @@ class Controller(LMObject):
             [a.receive(announced) for a in self.agents]
 
             # Update Crewmate Knowledge about who possibly lied
-            [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
+            # [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
 
         elif phase == "vote":
             votes = [a.vote() for a in self.agents]
