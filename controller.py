@@ -63,6 +63,9 @@ class Controller(LMObject):
                 # A kill has taken place, of the agent whose ID was returned
                 self.__remove_agent_with_id(result)
 
+                # The killed crewmate now knows who the imposter is
+                self.km.update_known_impostor(result,self.num_crew)
+
                 # Check to see how many crewmates have been killed, and if the impostor already won
                 if len(self.agents) <= 2:
                     self.send(Message(self, "game_over", {"victor": "impostor(s)"}))

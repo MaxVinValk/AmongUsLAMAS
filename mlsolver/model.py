@@ -117,9 +117,10 @@ class AmongUs(LMObject):
         # This leads to crewmates not having accessibility to the worlds where they are imposter
         # This leads to imposters only having a reflexive relation to themselves
         for i in range(self.num_agents):
-            self.relations[str(i)] = set(
-                ("Imp{}".format(x), "Imp{}".format(y)) for x in range(self.num_agents) for y in range(self.num_agents) if
-                ((i != x) and (i != y)))
+            if i is not self.imposter:
+                self.relations[str(i)] = set(
+                    ("Imp{}".format(x), "Imp{}".format(y)) for x in range(self.num_agents) for y in range(self.num_agents) if
+                    ((i != x) and (i != y)))
         # print(self.relations)
         self.relations.update(add_symmetric_edges(self.relations))
         self.relations.update(add_reflexive_edges(self.worlds, self.relations))
