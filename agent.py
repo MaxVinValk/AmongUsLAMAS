@@ -204,9 +204,9 @@ class Crewmate(Agent):
             vote = random.sample(suspects, 1)[0]
 
             # If you are not yet sure, there is a 50% probability that you will pass vote
+            # TODO: Could be improved (e.g. less people on list -> more likely to NOT vote pass)
             threshold = 0.5
             if random.random() > threshold:
-                print("random threshold passed")
                 vote = -1
 
             print(f"Crewmate {self.agent_id} votes for {vote}\n")
