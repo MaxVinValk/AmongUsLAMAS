@@ -1,6 +1,6 @@
 from agent import Crewmate, Impostor, create_agents
 from util.util import Message, LMObject
-
+from collections import Counter
 
 class Controller(LMObject):
     """
@@ -111,9 +111,23 @@ class Controller(LMObject):
             # [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
 
         elif phase == "vote":
-            votes = [a.vote() for a in self.agents]
+            # Gather all votes
+            votes = [a.vote(self.km, self.agents) for a in self.agents]
 
-            # TODO: Actually use voting results
+            # Get the ID with most votes
+            vote_count = Counter(votes)
+            top_votes = vote_count.most_common(2)
+
+            # If there is a tie, do not continue voting
+            if top_votes[0][1] == top_votes[1][1] and len(top_votes) > 1:
+                print(f"A tie: No agent was voted off.")
+            elif top_votes[0][0] == -1:
+                # Most agents voted for a tie, do not continue voting
+                print(f"Most agents pass: No agent was voted off.")
+            else:
+                # Remove agent with most votes from the game
+                self.__remove_agent_with_id(top_votes[0][0])
+                print(f"Agent {top_votes[0][0]} received the most votes.")
 
         elif phase == "check":
             imp_found = False

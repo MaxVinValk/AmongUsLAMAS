@@ -137,19 +137,21 @@ class Crewmate(Agent):
 
         corpse_found = -1
         kill_witnessed = False
+        agent_id_task_witnessed = False
 
         for evt in origin_room_evts:
-
             if evt[1].startswith("Kill"):
                 kill_witnessed = True
+        # TODO: Choose which tasks are 'visual' tasks
+            elif evt[1].startswith("Wires") or evt[1].startswith("Engine") or evt[1].startswith("Fuel"):
+                agent_id_task_witnessed = evt[0] # This is the ID of the agent that performed the task
             elif evt[1].startswith("Corpse"):
                 corpse_found = evt[0] # This is the ID of the agent that is found dead
 
-        self.update_knowledge_during_game(km, agents, kill_witnessed)
+        self.update_knowledge_during_game(km, agents, kill_witnessed, agent_id_task_witnessed)
         return corpse_found
 
-    def update_knowledge_during_game(self, km, agents, kill_witnessed):
-
+    def update_knowledge_during_game(self, km, agents, kill_witnessed, agent_id_task_witnessed):
         # Check which agents are roommates (and which are not)
         agents_in_same_room = []
         agents_elswhere = []
@@ -168,10 +170,11 @@ class Crewmate(Agent):
                     #self.other_is_imposter[a.agent_id] = False
                     km.update_known_crewmate(self.agent_id, a.agent_id)
 
-            # TODO: implement later
             # Clearing a crewmate by seeing their task:
-            # elif()
-            # (A1 is in the same room X as A2 at step Y $\land$ A2 performed a visual task in room X at step Y) $\rightarrow$ A1 knows A2 is a crewmate
+            elif agent_id_task_witnessed:
+                print(self.agent_id, "witnessed", agent_id_task_witnessed)
+                km.update_known_crewmate(self.agent_id, agent_id_task_witnessed)
+
 
     def announce(self):
         pass
@@ -179,8 +182,35 @@ class Crewmate(Agent):
     def receive(self, announced):
         pass
 
-    def vote(self):
-        pass
+    def vote(self, km, agents):
+        """Crewmates vote for an agent if they're sure they are the imposter. 
+        Otherwise, they have a chance of either voting an agent that they still suspect,
+        or passing."""
+
+        suspects = []
+
+        # Check which agents the current agent still suspects
+        for a in agents:
+            if km.suspects(self.agent_id, a.agent_id):
+                suspects.append(a.agent_id)
+                print(f"Crewmate {self.agent_id} suspects {a.agent_id}")
+
+        # If this is only a single agent, vote for this agent
+        if len(suspects) == 1:
+            print(f"Crewmate {self.agent_id} votes for {suspects[0]}\n")
+            return suspects[0]
+        else:  
+            # Randomly vote for an agent on the suspect-list
+            vote = random.sample(suspects, 1)[0]
+
+            # If you are not yet sure, there is a 50% probability that you will pass vote
+            threshold = 0.5
+            if random.random() > threshold:
+                print("random threshold passed")
+                vote = -1
+
+            print(f"Crewmate {self.agent_id} votes for {vote}\n")
+            return vote
 
     def is_impostor(self):
         return False
@@ -272,12 +302,14 @@ class Impostor(Agent):
         # But: It does need to know who is dead for voting
         pass
 
-    def vote(self):
+    def vote(self, km, agents):
+        """The imposter votes for a random living agent."""
         # TODO: Extend to work for multiple impostors
-        # TODO: Incorporate deaths in vote
-        total = self.num_imp + self.num_crew
-
-        return random.sample([x for x in range(total) if not x == self.agent_id], 1)[0]
+        # TODO: Extend with HOL (e.g. Imposter votes for most sus crewmate)
+        
+        vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive], 1)[0]
+        print(f"Imposter {self.agent_id} votes for {vote}")
+        return vote
 
     def round_reset(self):
         super().round_reset()
