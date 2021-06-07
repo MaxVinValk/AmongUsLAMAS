@@ -85,7 +85,7 @@ class SimpleSkeldPane(Pane):
 
             # We only care about the IDs in the room.
             # TODO: This is messy... Perhaps we can turn it into events when observed?
-            corpses_ids_in_room = [c[0] for c in room_corpses]
+            corpses_ids_in_room = [c.agent_id for c in room_corpses]
 
             for i, occupant in enumerate(room):
                 if occupant or i in corpses_ids_in_room:

@@ -1,9 +1,9 @@
 import random
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import deque
 from task import Task
-
+from room_events import EventType, RoomEvent
 
 class Map(ABC):
 
@@ -55,9 +55,11 @@ class Map(ABC):
         self.rooms[picked_room][agent.agent_id] = 1
         return picked_room
 
-    def mark_agent_killed(self, agent):
+    def mark_agent_killed(self, agent, voted_off=False):
         self.remove_agent(agent)
-        self.corpses[agent.room].append((agent.agent_id, "Corpse"))
+
+        if not voted_off:
+            self.corpses[agent.room].append(RoomEvent(EventType.CORPSE, agent.agent_id, "Corpse"))
 
     def remove_agent(self, agent):
         self.rooms[agent.room][agent.agent_id] = 0
@@ -155,12 +157,12 @@ class SimpleSkeld(Map):
         # information such as visual y/n, duration of task, precondition, etc.
         # As possible extensions for later
         tasks = [Task(0, "Wires"), Task(0, "Trash"),
-                 Task(1, "Scan"), Task(1, "Vials"),
+                 Task(1, "Scan", True), Task(1, "Vials"),
                  Task(2, "Engine"), Task(2, "Fuel"),
                  Task(3, "Manifolds"), Task(3, "Start reactor"),
                  Task(5, "Engine"), Task(5, "Fuel"),
                  Task(6, "Wires"), Task(6, "Align"), Task(6, "Divert power"),
-                 Task(7, "Fuel"),
+                 Task(7, "Fuel"), Task(7, "Trash", True),
                  Task(8, "Swipe")]
 
         super().__init__(room_nums, room_names, rooms_adjacent, room_start, room_meeting, tasks, num_agents)

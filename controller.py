@@ -1,6 +1,14 @@
 from agent import Crewmate, Impostor, create_agents
 from util.util import Message, LMObject
 from collections import Counter
+from enum import Enum
+
+class Phase(Enum):
+    ACT = 0
+    OBSERVE = 1
+    DISCUSS = 2
+    VOTE = 3
+    CHECK = 4
 
 class Controller(LMObject):
     """
@@ -25,8 +33,8 @@ class Controller(LMObject):
         self.agents = []
         self.reset_agents()
 
-        self.phases = ["act", "observe", "discuss", "vote", "check"]
-        self.phase = 0
+        #self.phases = ["act", "observe", "discuss", "vote", "check"]
+        self.phase = Phase.ACT
 
         self.is_game_over = False
 
@@ -38,7 +46,7 @@ class Controller(LMObject):
         """Resets the simulation"""
         self.game_map.map_reset()
         self.reset_agents()
-        self.phase = 0
+        self.phase = Phase.ACT
         self.is_game_over = False
         self.send(Message(self, "update", None))
         self.send(Message(self, "clear", None))
@@ -48,12 +56,11 @@ class Controller(LMObject):
         if self.is_game_over:
             return
 
-        phase = self.phases[self.phase]
-        print(phase)
+        print(self.phase)
 
-        next_phase = (self.phase + 1) % len(self.phases)
+        next_phase = (self.phase.value + 1) % len(Phase)
 
-        if phase == "act":
+        if self.phase == Phase.ACT:
 
             # To allow for more deterministic behaviour, let the impostors go first
             kills = [a.act() for a in self.agents if a.is_impostor()]
@@ -74,7 +81,7 @@ class Controller(LMObject):
             # Let the rest act.
             [a.act() for a in self.agents if not a.is_impostor()]
 
-        elif phase == "observe":
+        elif self.phase == Phase.OBSERVE:
             spotted_corpses = [a.observe(self.km, self.agents) for a in self.agents]
             self.game_map.reset_room_events()
 
@@ -90,7 +97,7 @@ class Controller(LMObject):
             if not corpse_has_been_found:
                 next_phase = 0
 
-        elif phase == "discuss":
+        elif self.phase == Phase.DISCUSS:
             # If we have reached this phase, it is because at least 1 corpse has been found. Thus, we clear all corpses
             self.game_map.clear_corpses()
 
@@ -110,7 +117,7 @@ class Controller(LMObject):
             # Update Crewmate Knowledge about who possibly lied?
             # [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
 
-        elif phase == "vote":
+        elif self.phase == Phase.VOTE:
             # Gather all votes
             votes = [a.vote(self.km, self.agents) for a in self.agents]
 
@@ -126,10 +133,16 @@ class Controller(LMObject):
                 print(f"Most agents pass: No agent was voted off.")
             else:
                 # Remove agent with most votes from the game
-                self.__remove_agent_with_id(top_votes[0][0])
+                self.__remove_agent_with_id(top_votes[0][0], voted_off=True)
                 print(f"Agent {top_votes[0][0]} received the most votes.")
 
-        elif phase == "check":
+        elif self.phase == Phase.CHECK:
+            # Check to see if the impostors win, triggers when a crewmate was voted off with 3 agents left
+            if len(self.agents) <= 2:
+                self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
+                self.is_game_over = True
+
+            # Check if the crewmates win
             imp_found = False
 
             for a in self.agents:
@@ -140,10 +153,10 @@ class Controller(LMObject):
                 self.send(Message(self, "game_over", {"victor": "crewmates"}))
                 self.is_game_over = True
 
-        self.phase = next_phase
+        self.phase = Phase(next_phase)
         self.send(Message(self, "update", None))
 
-    def __remove_agent_with_id(self, agent_id):
+    def __remove_agent_with_id(self, agent_id, voted_off=False):
 
         print(f"Removing agent {agent_id}")
 
@@ -156,7 +169,7 @@ class Controller(LMObject):
                 dead_agent = agent
                 break
 
-        self.game_map.mark_agent_killed(dead_agent)
+        self.game_map.mark_agent_killed(dead_agent, voted_off)
         self.agents.remove(dead_agent)
 
     def get_phase(self):

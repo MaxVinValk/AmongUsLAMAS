@@ -1,6 +1,6 @@
 import random
 from abc import ABC, abstractmethod
-
+from room_events import EventType, RoomEvent
 
 def create_agents(game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
     """Utility function to create an agent set with tasks, impostors"""
@@ -99,7 +99,8 @@ class Crewmate(Agent):
 
             # If we perform an action in a room, we can only see the room in which the action is performed.
             self.location_history.append(self.room)
-            self.game_map.add_room_event(self.room, (self.agent_id, self.goal.name))
+            evt = RoomEvent((EventType.TASK_VISUAL if self.goal.is_visual else EventType.TASK), self.agent_id, self.goal.name)
+            self.game_map.add_room_event(self.room, evt)
             self.goal = None
         else:
             self.__move()
@@ -140,13 +141,12 @@ class Crewmate(Agent):
         agent_id_task_witnessed = False
 
         for evt in origin_room_evts:
-            if evt[1].startswith("Kill"):
+            if evt.type == EventType.KILL:
                 kill_witnessed = True
-        # TODO: Choose which tasks are 'visual' tasks
-            elif evt[1].startswith("Wires") or evt[1].startswith("Engine") or evt[1].startswith("Fuel"):
-                agent_id_task_witnessed = evt[0] # This is the ID of the agent that performed the task
-            elif evt[1].startswith("Corpse"):
-                corpse_found = evt[0] # This is the ID of the agent that is found dead
+            elif evt.type == EventType.TASK_VISUAL:
+                agent_id_task_witnessed = evt.agent_id # This is the ID of the agent that performed the task
+            elif evt.type == EventType.CORPSE:
+                corpse_found = evt.agent_id # This is the ID of the agent that is found dead
 
         self.update_knowledge_during_game(km, agents, kill_witnessed, agent_id_task_witnessed)
         return corpse_found
@@ -270,7 +270,7 @@ class Impostor(Agent):
 
                     to_kill = random.sample(present_crewmates, 1)[0]
 
-                    self.game_map.add_room_event(self.room, (self.agent_id, f"Kill: {to_kill}"))
+                    self.game_map.add_room_event(self.room, RoomEvent(EventType.KILL, self.agent_id, "Kill"))
 
                     print(f"Impostor {self.agent_id} kills {to_kill}!")
 
