@@ -93,13 +93,13 @@ class Crewmate(Agent):
 
     def act(self):
         """Try to complete the goal that is currently set, or else move"""
-        if self.goal and self.room is self.goal[0]:
+        if self.goal and self.room is self.goal.room_id:
             print(
-                f"Crewmate {self.agent_id} completed their goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
+                f"Crewmate {self.agent_id} completed their goal: {self.goal.name} in {self.game_map.room_names[self.goal.room_id]}")
 
             # If we perform an action in a room, we can only see the room in which the action is performed.
             self.location_history.append(self.room)
-            self.game_map.add_room_event(self.room, (self.agent_id, self.goal[1]))
+            self.game_map.add_room_event(self.room, (self.agent_id, self.goal.name))
             self.goal = None
         else:
             self.__move()
@@ -112,14 +112,14 @@ class Crewmate(Agent):
                 self.goal = self.tasks.pop()
                 self.goal_history.append(self.goal)
                 print(
-                    f"Crewmate {self.agent_id} set as goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}")
+                    f"Crewmate {self.agent_id} set as goal: {self.goal.name} in {self.game_map.room_names[self.goal.room_id]}")
             else:
                 self.room = self.game_map.move_random(self)
                 self.location_history.append(self.room)
                 return
 
-        if self.room is not self.goal[0]:
-            self.room = self.game_map.next_toward(self, self.goal[0])
+        if self.room is not self.goal.room_id:
+            self.room = self.game_map.next_toward(self, self.goal.room_id)
 
         # Log the current room we are in: Either the room we moved to, or the room that happens to be the goal room
         self.location_history.append(self.room)
@@ -154,20 +154,20 @@ class Crewmate(Agent):
     def update_knowledge_during_game(self, km, agents, kill_witnessed, agent_id_task_witnessed):
         # Check which agents are roommates (and which are not)
         agents_in_same_room = []
-        agents_elswhere = []
+        agents_elsewhere = []
         for a in agents:
             if a.agent_id is not self.agent_id:
                 if a.location_history[-1] is self.location_history[-1]:
                     agents_in_same_room.append(a)
                 else:
-                    agents_elswhere.append(a)
+                    agents_elsewhere.append(a)
 
         if agents_in_same_room:
             # Catching the imposter on the body
             if kill_witnessed:
                 # One of the people in the room is the imposter, so the others are cleared
-                for a in agents_elswhere:
-                    #self.other_is_imposter[a.agent_id] = False
+                for a in agents_elsewhere:
+                    # self.other_is_imposter[a.agent_id] = False
                     km.update_known_crewmate(self.agent_id, a.agent_id)
 
             # Clearing a crewmate by seeing their task:

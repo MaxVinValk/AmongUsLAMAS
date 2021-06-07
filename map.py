@@ -2,6 +2,7 @@ import random
 
 from abc import ABC, abstractmethod
 from collections import deque
+from task import Task
 
 
 class Map(ABC):
@@ -153,21 +154,13 @@ class SimpleSkeld(Map):
         # Defined separately for each room/task to allow extending with additional
         # information such as visual y/n, duration of task, precondition, etc.
         # As possible extensions for later
-        tasks = [[0, "Wires"], [0, "Trash"],
-                 [1, "Scan"], [1, "Vials"],
-                 [2, "Engine"], [2, "Fuel"],
-                 [3, "Manifolds"], [3, "Start reactor"],
-                 [5, "Engine"], [5, "Fuel"],
-                 [6, "Wires"], [6, "Align"], [6, "Divert power"],
-                 [7, "Fuel"],
-                 [8, "Swipe"]]
+        tasks = [Task(0, "Wires"), Task(0, "Trash"),
+                 Task(1, "Scan"), Task(1, "Vials"),
+                 Task(2, "Engine"), Task(2, "Fuel"),
+                 Task(3, "Manifolds"), Task(3, "Start reactor"),
+                 Task(5, "Engine"), Task(5, "Fuel"),
+                 Task(6, "Wires"), Task(6, "Align"), Task(6, "Divert power"),
+                 Task(7, "Fuel"),
+                 Task(8, "Swipe")]
 
         super().__init__(room_nums, room_names, rooms_adjacent, room_start, room_meeting, tasks, num_agents)
-
-
-'''
-    
-    Need: Matrix such that it gives the next room to go to. Row: Starting point
-                                                            Col: next room
-
-'''
