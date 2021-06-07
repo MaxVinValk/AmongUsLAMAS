@@ -45,7 +45,7 @@ class Agent(ABC):
         pass
 
     @abstractmethod
-    def vote(self):
+    def vote(self, km, agents):
         pass
 
     def round_reset(self):
