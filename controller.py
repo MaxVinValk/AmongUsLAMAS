@@ -37,6 +37,7 @@ class Controller(LMObject):
         self.phase = Phase.ACT
 
         self.is_game_over = False
+        self.run_continuously = False
 
     def reset_agents(self):
         self.agents = create_agents(self.game_map, self.km, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
@@ -63,18 +64,28 @@ class Controller(LMObject):
         if self.phase == Phase.ACT:
 
             # To allow for more deterministic behaviour, let the impostors go first
-            kills = [a.act() for a in self.agents if a.is_impostor()]
-            kills = [res for res in kills if res is not None]
+            # Removal of dead agents happens in 2 steps: From the map, and from the agent set of agents
+            # that will receive an update. This is kind of an ugly construction, but it prevents from two
+            # Impostors attempting to kill the same crewmate, which results in a crash.
 
-            for result in kills:
-                # A kill has taken place, of the agent whose ID was returned
-                self.__remove_agent_with_id(result)
+            kills = []
 
-                # The killed crewmate now knows who the imposter is
-                self.km.update_known_impostor(result,self.num_crew)
+            for a in self.agents:
+                if not a.is_impostor():
+                    continue
+
+                kill = a.act()
+                if kill is not None:
+                    self.__remove_agent_with_id_from_map(kill)
+                    kills.append(kill)
+
+            for kill in kills:
+                self.__remove_agent_with_id_from_set(kill)
+                # The killed crewmate now knows who the impostor is
+                self.km.update_known_impostor(kill, self.num_crew)
 
                 # Check to see how many crewmates have been killed, and if the impostor already won
-                if len(self.agents) <= 2:
+                if len(self.agents) <= self.num_imp + 1:
                     self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
                     self.is_game_over = True
 
@@ -156,21 +167,31 @@ class Controller(LMObject):
         self.phase = Phase(next_phase)
         self.send(Message(self, "update", None))
 
-    def __remove_agent_with_id(self, agent_id, voted_off=False):
+    def check_continuous_update(self):
+        if self.run_continuously:
+            if self.is_game_over:
+                self.run_continuously = False
 
-        print(f"Removing agent {agent_id}")
+            self.step()
 
-        dead_agent = None
+    def run_to_end(self):
+        while not self.is_game_over:
+            self.step()
 
-        # TODO: This could be improved with a dictionary mapping IDs to objects. But we do not need such improvements
-        # as the set of agents is small
-        for agent in self.agents:
-            if agent.agent_id == agent_id:
-                dead_agent = agent
-                break
+    def __remove_agent_with_id_from_map(self, agent_id, voted_off=False):
+        print(f"Removing agent {agent_id} from the map")
+        dead_agent = self.get_agent_with_id(agent_id)
 
         self.game_map.mark_agent_killed(dead_agent, voted_off)
-        self.agents.remove(dead_agent)
+
+    def __remove_agent_with_id_from_set(self, agent_id):
+        print(f"Removing agent {agent_id} from agent update set")
+        dead_agent = self.get_agent_with_id(agent_id)
+        self.agents.remove(dead_agent);
+
+    def __remove_agent_with_id(self, agent_id, voted_off=False):
+        self.__remove_agent_with_id_from_map(agent_id, voted_off)
+        self.__remove_agent_with_id_from_set(agent_id)
 
     def get_phase(self):
         return self.phase
@@ -186,3 +207,7 @@ class Controller(LMObject):
             self.step()
         elif message.name == "reset":
             self.reset()
+        elif message.name == "toggle_continuous":
+            self.run_continuously = not self.run_continuously
+        elif message.name == "run_to_end":
+            self.run_to_end()

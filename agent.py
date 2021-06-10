@@ -2,12 +2,11 @@ import random
 from abc import ABC, abstractmethod
 from room_events import EventType, RoomEvent
 
-def create_agents(game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+def create_agents(game_map, km, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
     """Utility function to create an agent set with tasks, impostors"""
-    agents = [Crewmate(x, num_crew, num_imp, game_map, logger, num_tasks) for x in range(num_crew)]
-    # TODO: Multiple impostor support here
+    agents = [Crewmate(x, num_crew, num_imp, game_map, km, logger, num_tasks) for x in range(num_crew)]
     # noinspection PyTypeChecker
-    agents.append(Impostor(num_crew, num_crew, num_imp, game_map, logger, cooldown, stat_thres))
+    [agents.append(Impostor(num_crew + x, num_crew, num_imp, game_map, km, logger, cooldown, stat_thres)) for x in range(num_imp)]
 
     return agents
 
@@ -16,9 +15,10 @@ class Agent(ABC):
     """
     An abstract class which contains all functions an agent must have in order to ensure a proper simulation flow
     """
-    def __init__(self, agent_id, num_crew, num_imp, game_map, logger):
+    def __init__(self, agent_id, num_crew, num_imp, game_map, km, logger):
         self.agent_id = agent_id
         self.game_map = game_map
+        self.km = km
         self.logger = logger
         self.num_crew = num_crew
         self.num_imp = num_imp
@@ -33,7 +33,7 @@ class Agent(ABC):
         pass
 
     @abstractmethod
-    def observe(self, km, agents):
+    def observe(self, agents):
         pass
 
     @abstractmethod
@@ -45,7 +45,7 @@ class Agent(ABC):
         pass
 
     @abstractmethod
-    def vote(self, km, agents):
+    def vote(self, agents):
         pass
 
     def round_reset(self):
@@ -72,8 +72,8 @@ class Crewmate(Agent):
     This class provides the behaviour of a crewmate in all phases of the simulation
     """
 
-    def __init__(self, agent_id, num_crew, num_imp, game_map, logger, num_tasks):
-        super().__init__(agent_id, num_crew, num_imp, game_map, logger)
+    def __init__(self, agent_id, num_crew, num_imp, game_map, km, logger, num_tasks):
+        super().__init__(agent_id, num_crew, num_imp, game_map, km, logger)
 
         self.tasks = game_map.create_tasks_unique(num_tasks)
         self.goal = None
@@ -126,7 +126,7 @@ class Crewmate(Agent):
         self.location_history.append(self.room)
 
 
-    def observe(self, km, agents):
+    def observe(self, agents):
         """Observe the current room, the previous room, and all events that occurred there"""
 
         # After acting, it is guaranteed that there are at least 2 rooms in memory.
@@ -148,10 +148,10 @@ class Crewmate(Agent):
             elif evt.type == EventType.CORPSE:
                 corpse_found = evt.agent_id # This is the ID of the agent that is found dead
 
-        self.update_knowledge_during_game(km, agents, kill_witnessed, agent_id_task_witnessed)
+        self.update_knowledge_during_game(agents, kill_witnessed, agent_id_task_witnessed)
         return corpse_found
 
-    def update_knowledge_during_game(self, km, agents, kill_witnessed, agent_id_task_witnessed):
+    def update_knowledge_during_game(self, agents, kill_witnessed, agent_id_task_witnessed):
         # Check which agents are roommates (and which are not)
         agents_in_same_room = []
         agents_elsewhere = []
@@ -165,15 +165,17 @@ class Crewmate(Agent):
         if agents_in_same_room:
             # Catching the imposter on the body
             if kill_witnessed:
+                # TODO: We know who the impostor is, trim relations
                 # One of the people in the room is the imposter, so the others are cleared
-                for a in agents_elsewhere:
+                pass
+                # for a in agents_elsewhere:
                     # self.other_is_imposter[a.agent_id] = False
-                    km.update_known_crewmate(self.agent_id, a.agent_id)
+                    # self.km.update_known_crewmate(self.agent_id, a.agent_id)
 
             # Clearing a crewmate by seeing their task:
             elif agent_id_task_witnessed:
                 print(self.agent_id, "witnessed", agent_id_task_witnessed)
-                km.update_known_crewmate(self.agent_id, agent_id_task_witnessed)
+                self.km.update_known_crewmate(self.agent_id, agent_id_task_witnessed)
 
 
     def announce(self):
@@ -182,7 +184,7 @@ class Crewmate(Agent):
     def receive(self, announced):
         pass
 
-    def vote(self, km, agents):
+    def vote(self, agents):
         """Crewmates vote for an agent if they're sure they are the imposter. 
         Otherwise, they have a chance of either voting an agent that they still suspect,
         or passing."""
@@ -191,7 +193,7 @@ class Crewmate(Agent):
 
         # Check which agents the current agent still suspects
         for a in agents:
-            if km.suspects(self.agent_id, a.agent_id):
+            if self.km.suspects(self.agent_id, a.agent_id):
                 suspects.append(a.agent_id)
                 print(f"Crewmate {self.agent_id} suspects {a.agent_id}")
 
@@ -222,7 +224,7 @@ class Crewmate(Agent):
     def get_info(self):
 
         goal_line = ""
-        if self.goal == None:
+        if self.goal is None:
             goal_line = "No current goal"
         else:
             goal_line = f"Current goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}"
@@ -237,22 +239,19 @@ class Crewmate(Agent):
 
 class Impostor(Agent):
 
-    def __init__(self, agent_id, num_crew, num_imp, game_map, logger, cooldown, stat_threshold):
+    def __init__(self, agent_id, num_crew, num_imp, game_map, km, logger, cooldown, stat_threshold):
         self.cooldown = cooldown
         self.cooldown_ctr = self.cooldown
 
         # Stationary threshold: Threshold for standing still instead of moving during move function
         self.stat_threshold = stat_threshold
 
-        super().__init__(agent_id, num_crew, num_imp, game_map, logger)
+        super().__init__(agent_id, num_crew, num_imp, game_map, km, logger)
 
     def act(self):
         """Try to kill if possible, otherwise, move about randomly"""
 
         current_room = self.game_map.rooms[self.room]
-
-        # TODO: Allow for more than one impostor here.
-        # Easiest adjustment: Give each Impostor the ID of each impostor
 
         if self.cooldown_ctr == 0:
             num_others = sum(current_room) - 1
@@ -263,10 +262,16 @@ class Impostor(Agent):
 
                 if random.random() < threshold:
                     # Kill!
-                    # Select the IDs of all others in the room that are present and are not oneself.
+                    # Select the IDs of all others in the room that are present and are not one of the impostors
                     # This is easily changed for multiple known impostor IDs
+                    # IDs from Impostors start at self.num_crew and go up to self.num_crew + self.num_imp - 1
+
                     present_crewmates = [x for x in range(len(current_room)) if
-                                         not current_room[x] == 0 and not x == self.agent_id]
+                                         not current_room[x] == 0 and not x >= self.num_crew]
+
+                    # If we are in a room with only impostors, this can happen
+                    if len(present_crewmates) == 0:
+                        return
 
                     to_kill = random.sample(present_crewmates, 1)[0]
 
@@ -289,7 +294,7 @@ class Impostor(Agent):
 
         self.location_history.append(self.room)
 
-    def observe(self, km, agents):
+    def observe(self, agents):
         # The impostor tells at random, so it does not need to see
         return -1
 
@@ -302,7 +307,7 @@ class Impostor(Agent):
         # But: It does need to know who is dead for voting
         pass
 
-    def vote(self, km, agents):
+    def vote(self, agents):
         """The imposter votes for a random living agent."""
         # TODO: Extend to work for multiple impostors
         # TODO: Extend with HOL (e.g. Imposter votes for most sus crewmate)

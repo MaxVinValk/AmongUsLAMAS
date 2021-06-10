@@ -7,8 +7,8 @@ from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane, KripkePane
 from mlsolver.model import AmongUs as KripkeModel
 
 if __name__ == "__main__":
-    num_crew = 4
-    num_imp = 1
+    num_crew = 8
+    num_imp = 2
     num_tasks = 5
 
     # The map we want to use
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     COOLDOWN = 5
     STATIONARY_THRESHOLD = 0.8
 
+    #TODO: Change this function to work with multiple impostors
     km = KripkeModel(num_crew + num_imp, num_crew)
 
     # TODO: Implement functioning logger instead of passing None
@@ -68,6 +69,9 @@ if __name__ == "__main__":
         screen.fill((255, 255, 255))
 
         tm.draw()
+
+        # To allow the simulation to play itself
+        controller.check_continuous_update()
 
         pygame.display.flip()
         clock.tick(30)

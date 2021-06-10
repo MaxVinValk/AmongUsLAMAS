@@ -156,6 +156,14 @@ class MenuPane(Pane):
         show_kripke_btn.register_listener(tab_manager)
         self.add_gui_element(show_kripke_btn)
 
+        run_continuously_btn = Button(screen, x + 8, y + 150, 128, 32, "Run continuously", "toggle_continuous", None)
+        run_continuously_btn.register_listener(controller)
+        self.add_gui_element(run_continuously_btn)
+
+        run_to_end_btn = Button(screen, x + 8, y + 188, 128, 32, "Jump to end", "run_to_end", None)
+        run_to_end_btn.register_listener(controller)
+        self.add_gui_element(run_to_end_btn)
+
 
 class InfoPane(Pane):
 
