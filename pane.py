@@ -138,7 +138,6 @@ class SimpleSkeldPane(MapPane):
         super().__init__(controller, num_imp, screen, x, y, bg_img, room_coords, room_width)
 
 
-
 class MenuPane(Pane):
 
     def __init__(self, km, tab_manager, controller, screen, x, y, w, h, color):

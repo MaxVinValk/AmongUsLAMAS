@@ -33,13 +33,13 @@ class Controller(LMObject):
         self.agents = []
         self.reset_agents()
 
-        #self.phases = ["act", "observe", "discuss", "vote", "check"]
+        # self.phases = ["act", "observe", "discuss", "vote", "check"]
         self.phase = Phase.ACT
 
         self.is_game_over = False
 
     def reset_agents(self):
-        self.agents = create_agents(self.game_map, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
+        self.agents = create_agents(self.game_map, self.km, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
                                     self.stat_thres, self.logger)
 
     def reset(self):
@@ -82,7 +82,7 @@ class Controller(LMObject):
             [a.act() for a in self.agents if not a.is_impostor()]
 
         elif self.phase == Phase.OBSERVE:
-            spotted_corpses = [a.observe(self.km, self.agents) for a in self.agents]
+            spotted_corpses = [a.observe(self.agents) for a in self.agents]
             self.game_map.reset_room_events()
 
             corpse_has_been_found = False
@@ -119,7 +119,7 @@ class Controller(LMObject):
 
         elif self.phase == Phase.VOTE:
             # Gather all votes
-            votes = [a.vote(self.km, self.agents) for a in self.agents]
+            votes = [a.vote(self.agents) for a in self.agents]
 
             # Get the ID with most votes
             vote_count = Counter(votes)
