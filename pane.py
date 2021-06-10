@@ -37,7 +37,7 @@ class Pane(LMObject):
         pass
 
 
-class SimpleSkeldPane(Pane):
+class MapPane(Pane):
     class Agent_Sprite:
         def __init__(self, x, y, w, h, agent_id, img):
             self.x, self.y = x, y
@@ -50,12 +50,12 @@ class SimpleSkeldPane(Pane):
             screen.blit(get_default_gui_font().render(f"{self.agent_id}", True, (255, 255, 255)),
                         (self.x + 4, self.y + 4))
 
-    def __init__(self, controller, num_imp, screen, x, y):
+    def __init__(self, controller, num_imp, screen, x, y, map_image, room_coords, room_width):
         self.game_map = controller.game_map
         self.agents = controller.agents
         self.num_imp = num_imp
 
-        self.bg_img = pygame.image.load("sprites/simpleskeld.png")
+        self.bg_img = map_image
         self.imp_img = pygame.image.load("sprites/impostor_small.png")
         self.crew_img = pygame.image.load("sprites/crew_small.png")
         self.corpse_img = pygame.image.load("sprites/corpse_recoloured_small.png")
@@ -72,7 +72,6 @@ class SimpleSkeldPane(Pane):
 
     def draw(self):
         self.screen.blit(self.bg_img, (self.x, self.y))
-
         [s.draw(self.screen) for s in self.sprites_to_draw]
 
     def draw_update(self):
@@ -99,7 +98,8 @@ class SimpleSkeldPane(Pane):
                         img_to_use = self.imp_img
 
                     size = img_to_use.get_size()
-                    self.sprites_to_draw.append(self.Agent_Sprite(start_x, start_y, size[0], size[1], i, img_to_use))
+                    self.sprites_to_draw.append(
+                        self.Agent_Sprite(start_x, start_y, size[0], size[1], i, img_to_use))
 
                     start_x += self.crew_img.get_size()[0] + 8
                     width_used += 1
@@ -116,7 +116,7 @@ class SimpleSkeldPane(Pane):
                 if a.x <= pos[0] < (a.x + a.w):
                     if a.y <= pos[1] < (a.y + a.h):
                         print(f"You just clicked on agent: {a.agent_id}")
-                        self.send(Message(self, "agent_clicked", {"agent_id" : a.agent_id}))
+                        self.send(Message(self, "agent_clicked", {"agent_id": a.agent_id}))
                         clicked_agent = True
 
             if not clicked_agent:
@@ -125,6 +125,18 @@ class SimpleSkeldPane(Pane):
     def receive(self, message):
         if message.name == "update":
             self.draw_update()
+
+
+class SimpleSkeldPane(MapPane):
+    def __init__(self, controller, num_imp, screen, x, y):
+        bg_img = pygame.image.load("sprites/simpleskeld.png")
+
+        room_coords = [(444, 124), (312, 216), (120, 136), (28, 267), (234, 262), (124, 424), (336, 366),
+                            (474, 440), (624, 340), (258, 130), (524, 286), (130, 228), (266, 482)]
+        room_width = [5, 2, 2, 3, 2, 3, 3, 4, 3, 5, 2, 2, 4]
+
+        super().__init__(controller, num_imp, screen, x, y, bg_img, room_coords, room_width)
+
 
 
 class MenuPane(Pane):
