@@ -17,7 +17,13 @@ class Pane(LMObject):
         self.gui_elements = []
 
     def draw(self):
+        self.draw_background()
+        self.draw_gui()
+
+    def draw_background(self):
         pygame.draw.rect(self.screen, self.color, (self.x, self.y, self.w, self.h))
+
+    def draw_gui(self):
         [g.draw() for g in self.gui_elements]
 
     def add_gui_element(self, gui_element):
@@ -207,12 +213,41 @@ class KripkePane(Pane):
         super().__init__(controller, screen, x, y, w, h, color)
         self.km = km
 
-        switch_back_btn = Button(screen, 800, 700, 128, 32, "Switch back", "switch", {"target": 0})
+        switch_back_btn = Button(screen, 860, 700, 128, 32, "Switch back", "switch", {"target": 0})
         switch_back_btn.register_listener(tab_manager)
         self.add_gui_element(switch_back_btn)
 
-    def draw(self):
-        super().draw()
-        kripke_img = self.km.plot_fixed()
-        self.screen.blit(kripke_img, (312, 128))
+        self.scroll_speed = 10
+        self.img_x = 0
+        self.img_y = 0
 
+        self.current_zoom = 1
+
+    def draw(self):
+        super().draw_background()
+        kripke_img = self.km.plot_fixed()
+
+        scale = (int(kripke_img.get_size()[0] * self.current_zoom), int(kripke_img.get_size()[1] * self.current_zoom))
+
+        scaled_kripke_img = pygame.transform.smoothscale(kripke_img, scale)
+
+        self.screen.blit(scaled_kripke_img, (self.img_x, self.img_y))
+        self.draw_gui()
+
+    def receive(self, message):
+        if message.name == "scroll":
+            if message.information["side"] == "left":
+                self.img_x += self.scroll_speed
+            elif message.information["side"] == "right":
+                self.img_x -= self.scroll_speed
+            elif message.information["side"] == "up":
+                self.img_y += self.scroll_speed
+            elif message.information["side"] == "down":
+                self.img_y -= self.scroll_speed
+
+        if message.name == "zoom":
+            if message.information["direction"] == "up":
+                self.current_zoom += 0.1
+            else:
+                if self.current_zoom > 0.1:
+                    self.current_zoom -= 0.1

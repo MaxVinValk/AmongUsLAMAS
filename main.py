@@ -5,6 +5,7 @@ from controller import Controller
 from gui.tabmanager import TabManager
 from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane, KripkePane
 from mlsolver.model import AmongUs as KripkeModel
+from util.util import Message
 
 if __name__ == "__main__":
     num_crew = 8
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     STATIONARY_THRESHOLD = 0.8
 
     #TODO: Change this function to work with multiple impostors
-    km = KripkeModel(num_crew + num_imp, num_crew)
+    km = KripkeModel(num_crew + num_imp)
 
     # TODO: Implement functioning logger instead of passing None
 
@@ -63,8 +64,31 @@ if __name__ == "__main__":
                 if event.key == pygame.K_SPACE:
                     controller.step()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-                tm.handle_click(pos, event.button)
+                if event.button == 1:
+                    pos = pygame.mouse.get_pos()
+                    tm.handle_click(pos, event.button)
+                # Ugly and should be handled by the TM
+                elif tm.active_tab == 1:
+                    if event.button == 4:
+                        kp.receive(Message(None, "zoom", {"direction": "up"}))
+                    elif event.button == 5:
+                        kp.receive(Message(None, "zoom", {"direction": "down"}))
+
+        # held key events
+        keys = pygame.key.get_pressed()
+
+        # Should be handled by the tm
+        if tm.active_tab == 1:
+            if keys[pygame.K_LEFT]:
+                kp.receive(Message(None, "scroll", {"side": "left"}))
+            elif keys[pygame.K_RIGHT]:
+                kp.receive(Message(None, "scroll", {"side": "right"}))
+
+            if keys[pygame.K_UP]:
+                kp.receive(Message(None, "scroll", {"side": "up"}))
+            elif keys[pygame.K_DOWN]:
+                kp.receive(Message(None, "scroll", {"side": "down"}))
+
 
         screen.fill((255, 255, 255))
 
