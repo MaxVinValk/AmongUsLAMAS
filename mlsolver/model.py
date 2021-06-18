@@ -264,3 +264,95 @@ if __name__ == "__main__":
         show_kripke()
         pygame.display.update()
         clock.tick(60)
+
+
+# class AmongUsOneImposter(LMObject):
+#     def __init__(self, num_agents, imposter):
+#         self.num_agents = num_agents
+#         self.imposter = imposter
+
+#         self.setup()
+
+#     def setup(self):
+#         self.worlds = []
+#         self.relations = {}
+
+#         # Build the same number of worlds as there are agents. Each world has one imposter
+#         for i in range(self.num_agents):
+#             agent_is_imposter = {}
+#             for j in range(self.num_agents):
+#                 if i == j:
+#                     agent_is_imposter["IsImp:{}".format(j)] = True
+#                 else:
+#                     agent_is_imposter["IsImp:{}".format(j)] = False
+
+#             self.worlds.append(World("Imp{}".format(i), agent_is_imposter))
+
+#         # Build relations according to the following rules:
+#         # Each agent knows whether they themselves are imposter or not
+#         # This leads to crewmates not having accessibility to the worlds where they are imposter
+#         for i in range(self.num_agents):
+#             if i is not self.imposter:
+#                 self.relations[str(i)] = set(
+#                     ("Imp{}".format(x), "Imp{}".format(y)) for x in range(self.num_agents) for y in range(self.num_agents) if
+#                     ((i != x) and (i != y)))
+
+#         self.relations.update(add_symmetric_edges(self.relations))
+#         self.relations.update(add_reflexive_edges(self.worlds, self.relations))
+#         self.kripke_structure = KripkeStructure(self.worlds, self.relations)
+#         self.real_world = "Imp{}".format(self.imposter)
+
+#     def suspects(self, observer, other):
+#         """ Check if agent i suspects agent j of being the impostor
+#         We do this by evaluating the sentence "i knows not "IsImp:j" 
+#         """
+#         sentence = Not(Box_a(str(observer), Not(Atom("IsImp:{}".format(other)))))
+#         return sentence.semantic(self.kripke_structure, self.real_world)
+
+#     def update_known_impostor(self, observer, impostor):
+#         """Update the model to register that a crewmate has caught the impostor
+#         """
+#         sentence = Atom("IsImp:{}".format(impostor))
+#         self.kripke_structure = kripke_structure_solve_a(self.kripke_structure, str(observer), sentence)
+
+#     def update_known_crewmate(self, observer, crewmate):
+#         """Update the model to register that a crewmate no longer suspects another crewmate
+#         (e.g. because of a visual task)
+#         """
+#         sentence = Not(Atom("IsImp:{}".format(crewmate)))
+#         self.kripke_structure = kripke_structure_solve_a(self.kripke_structure, str(observer), sentence)
+
+#     def plot_fixed(self, size=2, label_pos=0.25, render=True):
+#         """ Plot the kripke structure using the `fixed_layout_kripke` function
+#         """
+#         worlds = list()
+#         world_id = dict()
+#         for i, w in enumerate(self.kripke_structure.worlds):
+#             world_id[w.name] = i
+#             worlds.append(w.name)
+#         connectivity = {}
+#         for agent, relations in self.kripke_structure.relations.items():
+#             for (start, end) in relations:
+#                 (start, end) = (min(start, end), max(start, end))
+#                 if start == end:
+#                     continue
+#                 if (start, end) in connectivity:
+#                     connectivity[(start, end)].add(agent)
+#                 else:
+#                     connectivity[(start, end)] = set([agent])
+
+#         edges = []
+#         for (start, end), labels in connectivity.items():
+#             edges.append((world_id[start], world_id[end], ",".join(sorted(labels))))
+#         dot = fixed_layout_graphviz(worlds, world_id[self.real_world], edges, r=size, label_pos=label_pos)
+#         if render:
+#             with tempfile.TemporaryDirectory() as tmpdirname:
+#                 dot.render('kripke', format='png', directory=tmpdirname)
+#                 img = pygame.image.load(os.path.join(tmpdirname, 'kripke.png'))
+#                 return img
+#         else:
+#             return dot
+
+#     def receive(self, message):
+#         if message.name == "reset":
+#             self.setup()
