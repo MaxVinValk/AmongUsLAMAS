@@ -38,13 +38,14 @@ def add_symmetric_edges(relations):
     return result
 
 
-def kripke_structure_solve_a(self, agent, formula):
+def kripke_structure_solve_a(self, agent, formula, print_statement=False):
     """ This function is a small change to mlsolver taken from the code of The Ship at 
     https://github.com/JohnRoyale/MAS2018/blob/master/mlsolver/kripke.py#L36
     it is necessary to be able to execute updates for only one agent in multi-agent Kripke structures
     """
     nodes_to_remove = self.nodes_not_follow_formula(formula)
-    print("Removing nodes: {}".format(nodes_to_remove))
+    if print_statement and len(nodes_to_remove) != 0:
+        print("Removing nodes: {}".format(nodes_to_remove))
     if len(nodes_to_remove) == 0:
         return self
 
@@ -153,6 +154,14 @@ class AmongUs(LMObject):
         sentence = Not(Box_a(str(observer), Not(Atom("IsImp:{}".format(other)))))
         return sentence.semantic(self.kripke_structure, self.real_world)
 
+    def knows_imp(self, observer, other):
+        sentence = Box_a(str(observer), Atom(f"IsImp:{other}"))
+        return sentence.semantic(self.kripke_structure, self.real_world)
+
+    def knows_crew(self, observer, other):
+        sentence = Box_a(str(observer), Not(Atom(f"IsImp:{other}")))
+        return sentence.semantic(self.kripke_structure, self.real_world)
+
     def update_known_impostor(self, observer, impostor):
         """Update the model to register that a crewmate has caught the impostor
         """
@@ -167,6 +176,26 @@ class AmongUs(LMObject):
         sentence = Not(Atom("IsImp:{}".format(crewmate)))
         self.kripke_structure = kripke_structure_solve_a(self.kripke_structure, str(observer), sentence)
         self.has_received_update = True
+
+    def update(self, observer, sentence):
+        if sentence is not None:
+            self.kripke_structure = kripke_structure_solve_a(self.kripke_structure, str(observer), sentence, True)
+
+    def retrieve_knowledge(self, observer):
+        conjunction = Not(Atom(f"IsImp:{observer}"))
+
+        for i in range(self.num_agents):
+            if i == observer:
+                continue
+
+            if self.knows_crew(observer, i):
+                conjunction = And(conjunction, Not(Atom(f"IsImp:{i}")))
+            elif self.knows_imp(observer, i):
+                conjunction = And(conjunction, Atom(f"IsImp:{i}"))
+            else:
+                conjunction = And(conjunction, Or(Atom(f"IsImp:{i}"), Not(Atom(f"IsImp:{i}"))))
+
+        return Box_a(str(observer), conjunction)
 
     def plot_fixed(self, size=15, label_pos=0.25, render=True):
         """ Plot the kripke structure using the `fixed_layout_kripke` function

@@ -1,6 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 from room_events import EventType, RoomEvent
+from mlsolver.formula import *
 
 def create_agents(game_map, km, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
     """Utility function to create an agent set with tasks, impostors"""
@@ -27,6 +28,7 @@ class Agent(ABC):
         self.alive = True
 
         self.location_history = [self.room]
+        self.announcement_set = [None for _ in range(num_crew + num_imp)]
 
     @abstractmethod
     def act(self):
@@ -42,7 +44,9 @@ class Agent(ABC):
 
     @abstractmethod
     def receive(self, announced):
-        pass
+        for i in range(len(self.announcement_set)):
+            if announced[i] is not None:
+                self.announcement_set[i] = announced[i]
 
     @abstractmethod
     def vote(self, agents):
@@ -78,7 +82,12 @@ class Crewmate(Agent):
         self.tasks = game_map.create_tasks_unique(num_tasks)
         self.goal = None
         self.goal_history = []
+
+        # TODO: look at this
         self.other_is_imposter = {}
+
+        self.trusted_agents = [False for _ in range(self.num_crew + num_imp)]
+        self.trusted_agents[self.agent_id] = True
 
     # TODO
     def update_knowledge_before_discussion(self, km):
@@ -137,21 +146,21 @@ class Crewmate(Agent):
         origin_room_evts.extend(target_room_evts)
 
         corpse_found = -1
-        kill_witnessed = False
-        agent_id_task_witnessed = False
+        agent_id_kill_witnessed = -1
+        agent_id_task_witnessed = -1
 
         for evt in origin_room_evts:
             if evt.type == EventType.KILL:
-                kill_witnessed = True
+                agent_id_kill_witnessed = evt.agent_id
             elif evt.type == EventType.TASK_VISUAL:
                 agent_id_task_witnessed = evt.agent_id # This is the ID of the agent that performed the task
             elif evt.type == EventType.CORPSE:
                 corpse_found = evt.agent_id # This is the ID of the agent that is found dead
 
-        self.update_knowledge_during_game(agents, kill_witnessed, agent_id_task_witnessed)
+        self.update_knowledge_during_game(agents, agent_id_kill_witnessed, agent_id_task_witnessed)
         return corpse_found
 
-    def update_knowledge_during_game(self, agents, kill_witnessed, agent_id_task_witnessed):
+    def update_knowledge_during_game(self, agents, agent_id_kill_witnessed, agent_id_task_witnessed):
         # Check which agents are roommates (and which are not)
         agents_in_same_room = []
         agents_elsewhere = []
@@ -164,25 +173,30 @@ class Crewmate(Agent):
 
         if agents_in_same_room:
             # Catching the imposter on the body
-            if kill_witnessed:
-                # TODO: We know who the impostor is, trim relations
-                # One of the people in the room is the imposter, so the others are cleared
-                pass
-                # for a in agents_elsewhere:
-                    # self.other_is_imposter[a.agent_id] = False
-                    # self.km.update_known_crewmate(self.agent_id, a.agent_id)
+            if agent_id_kill_witnessed != -1:
+                self.km.update_known_impostor(self.agent_id, agent_id_kill_witnessed)
 
             # Clearing a crewmate by seeing their task:
-            elif agent_id_task_witnessed:
+            elif agent_id_task_witnessed != -1:
                 print(self.agent_id, "witnessed", agent_id_task_witnessed)
                 self.km.update_known_crewmate(self.agent_id, agent_id_task_witnessed)
-
+                self.trusted_agents[agent_id_task_witnessed] = True
 
     def announce(self):
-        pass
+        return self.km.retrieve_knowledge(self.agent_id)
 
     def receive(self, announced):
-        pass
+        super().receive(announced)
+
+        for i in range(self.num_crew + self.num_imp):
+            if self.trusted_agents[i] and i is not self.agent_id:
+
+                if self.announcement_set[i] is not None:
+                    print(f"{self.agent_id} trusts {i}")
+                    formula = self.announcement_set[i].inner
+
+                    print(f"On formula: {formula}")
+                    self.km.update(self.agent_id, formula)
 
     def vote(self, agents):
         """Crewmates vote for an agent if they're sure they are the imposter. 
@@ -190,14 +204,34 @@ class Crewmate(Agent):
         or passing."""
 
         suspects = []
-
+        known_impostor = -1
         # Check which agents the current agent still suspects
         for a in agents:
-            if self.km.suspects(self.agent_id, a.agent_id):
+            if self.km.knows_imp(self.agent_id, a.agent_id):
+                known_impostor = a.agent_id
+            elif self.km.suspects(self.agent_id, a.agent_id):
                 suspects.append(a.agent_id)
                 print(f"Crewmate {self.agent_id} suspects {a.agent_id}")
 
+        if known_impostor != -1:
+            return known_impostor
+        else:
+            # Randomly vote for an agent on the suspect-list
+            vote = random.sample(suspects, 1)[0]
+
+            # If you are not yet sure, there is a 50% probability that you will pass vote
+            # TODO: Could be improved (e.g. less people on list -> more likely to NOT vote pass)
+            threshold = (len(suspects) / (self.num_crew + self.num_imp)) * 0.5
+            if random.random() < threshold:
+                vote = -1
+
+            print(f"Crewmate {self.agent_id} votes for {vote}\n")
+            return vote
+
+
+
         # If this is only a single agent, vote for this agent
+        """
         if len(suspects) == 1:
             print(f"Crewmate {self.agent_id} votes for {suspects[0]}\n")
             return suspects[0]
@@ -213,6 +247,7 @@ class Crewmate(Agent):
 
             print(f"Crewmate {self.agent_id} votes for {vote}\n")
             return vote
+        """
 
     def is_impostor(self):
         return False
@@ -303,16 +338,17 @@ class Impostor(Agent):
         pass
 
     def receive(self, announced):
+        super().receive(announced)
         # The impostor does not do anything with announced information (for now)
         # But: It does need to know who is dead for voting
-        pass
+
 
     def vote(self, agents):
         """The imposter votes for a random living agent."""
         # TODO: Extend to work for multiple impostors
         # TODO: Extend with HOL (e.g. Imposter votes for most sus crewmate)
         
-        vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive], 1)[0]
+        vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
         print(f"Imposter {self.agent_id} votes for {vote}")
         return vote
 

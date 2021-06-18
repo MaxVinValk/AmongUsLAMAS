@@ -83,11 +83,7 @@ class Controller(LMObject):
                 self.__remove_agent_with_id_from_set(kill)
                 # The killed crewmate now knows who the impostor is
                 self.km.update_known_impostor(kill, self.num_crew)
-
-                # Check to see how many crewmates have been killed, and if the impostor already won
-                if len(self.agents) <= self.num_imp + 1:
-                    self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
-                    self.is_game_over = True
+                self.check_game_over()
 
             # Let the rest act.
             [a.act() for a in self.agents if not a.is_impostor()]
@@ -122,7 +118,10 @@ class Controller(LMObject):
             # Discussing takes two phases
             # TODO: Consider multi-round announcements? It may be the case that after 1 announcement,
             # another agent will obtain the ability to announce something else. Needs to be investigated further.
-            announced = [a.announce() for a in self.agents]
+            announced = [None for _ in range(self.num_imp + self.num_crew)]
+            for a in self.agents:
+                announced[a.agent_id] = a.announce()
+
             [a.receive(announced) for a in self.agents]
 
             # Update Crewmate Knowledge about who possibly lied?
@@ -148,21 +147,7 @@ class Controller(LMObject):
                 print(f"Agent {top_votes[0][0]} received the most votes.")
 
         elif self.phase == Phase.CHECK:
-            # Check to see if the impostors win, triggers when a crewmate was voted off with 3 agents left
-            if len(self.agents) <= 2:
-                self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
-                self.is_game_over = True
-
-            # Check if the crewmates win
-            imp_found = False
-
-            for a in self.agents:
-                if a.is_impostor():
-                    imp_found = True
-
-            if not imp_found:
-                self.send(Message(self, "game_over", {"victor": "crewmates"}))
-                self.is_game_over = True
+            self.check_game_over()
 
         self.phase = Phase(next_phase)
         self.send(Message(self, "update", None))
@@ -177,6 +162,21 @@ class Controller(LMObject):
     def run_to_end(self):
         while not self.is_game_over:
             self.step()
+
+    def check_game_over(self):
+        num_imps = 0
+        for a in self.agents:
+            if a.is_impostor():
+                num_imps = num_imps + 1
+
+        num_crew = len(self.agents) - num_imps
+
+        if num_imps == 0:
+            self.send(Message(self, "game_over", {"victor": "crewmates"}))
+            self.is_game_over = True
+        elif num_imps >= num_crew:
+            self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
+            self.is_game_over = True
 
     def __remove_agent_with_id_from_map(self, agent_id, voted_off=False):
         print(f"Removing agent {agent_id} from the map")

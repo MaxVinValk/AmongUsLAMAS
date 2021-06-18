@@ -71,9 +71,11 @@ class Box_a:
     def __eq__(self, other):
         raise NotImplementedError
 
-    # TODO
     def __str__(self):
-        raise NotImplementedError
+        if isinstance(self.inner, Atom):
+            return f"K_{self.agent}" + " " + str(self.inner)
+        else:
+            return f"K_{self.agent}" + "(" + str(self.inner) + ")"
 
 
 class Box_star:
