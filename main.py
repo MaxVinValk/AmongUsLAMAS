@@ -16,7 +16,7 @@ if __name__ == "__main__":
     ss = SimpleSkeld(num_imp + num_crew)
 
     COOLDOWN = 5
-    STATIONARY_THRESHOLD = 0.8
+    STATIONARY_THRESHOLD = 0.5
 
     #TODO: Change this function to work with multiple impostors
     km = KripkeModel(num_crew + num_imp)

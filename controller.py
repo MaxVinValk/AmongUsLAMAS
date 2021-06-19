@@ -29,6 +29,7 @@ class Controller(LMObject):
         self.cooldown = cooldown
         self.stat_thres = stat_thres
         self.logger = logger
+        self.count_crewmate_wins = 0
 
         self.agents = []
         self.reset_agents()
@@ -45,6 +46,7 @@ class Controller(LMObject):
 
     def reset(self):
         """Resets the simulation"""
+        self.km.reset()
         self.game_map.map_reset()
         self.reset_agents()
         self.phase = Phase.ACT
@@ -163,20 +165,34 @@ class Controller(LMObject):
         while not self.is_game_over:
             self.step()
 
+    def run_hundred_times(self):
+        epochs = 100
+        self.count_crewmate_wins = 0
+        for i in range(epochs):
+            self.run_to_end()
+            self.reset()
+        print(f'Crewmates won {self.count_crewmate_wins} times out of {epochs}.')
+        print(f'Imposters won {epochs - self.count_crewmate_wins} times out of {epochs}.')
+        self.count_crewmate_wins = 0
+
     def check_game_over(self):
-        num_imps = 0
-        for a in self.agents:
-            if a.is_impostor():
-                num_imps = num_imps + 1
+        if self.is_game_over == False:
+            num_imps = 0
+            for a in self.agents:
+                if a.is_impostor():
+                    num_imps = num_imps + 1
 
-        num_crew = len(self.agents) - num_imps
+            num_crew = len(self.agents) - num_imps
 
-        if num_imps == 0:
-            self.send(Message(self, "game_over", {"victor": "crewmates"}))
-            self.is_game_over = True
-        elif num_imps >= num_crew:
-            self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
-            self.is_game_over = True
+            if num_imps == 0:
+                self.send(Message(self, "game_over", {"victor": "crewmates"}))
+                print(f'Crewmates win!')
+                self.is_game_over = True
+                self.count_crewmate_wins = self.count_crewmate_wins + 1
+            elif num_imps >= num_crew:
+                self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
+                print(f'Imposters win!')
+                self.is_game_over = True
 
     def __remove_agent_with_id_from_map(self, agent_id, voted_off=False):
         print(f"Removing agent {agent_id} from the map")
@@ -208,6 +224,11 @@ class Controller(LMObject):
         elif message.name == "reset":
             self.reset()
         elif message.name == "toggle_continuous":
+            self.reset()
             self.run_continuously = not self.run_continuously
         elif message.name == "run_to_end":
+            self.reset()
             self.run_to_end()
+        elif message.name == "run_hundred_times":
+            self.reset()
+            self.run_hundred_times()

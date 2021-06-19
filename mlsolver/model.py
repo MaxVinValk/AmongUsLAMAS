@@ -235,9 +235,13 @@ class AmongUs(LMObject):
             else:
                 return dot
 
+
+    def reset(self):
+        self.setup()
+
+    #TODO: Weghalen?
     def receive(self, message):
-        if message.name == "reset":
-            self.setup()
+        pass
 
 
 if __name__ == "__main__":

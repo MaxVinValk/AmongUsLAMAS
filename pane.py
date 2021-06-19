@@ -151,7 +151,6 @@ class MenuPane(Pane):
 
         reset_btn = Button(screen, x + 8, y + 32, 128, 32, "Reset", "reset", None)
         reset_btn.register_listener(controller)
-        reset_btn.register_listener(km)
         self.add_gui_element(reset_btn)
 
         step_btn = Button(screen, x + 8, y + 72, 128, 32, "Step", "step", None)
@@ -170,6 +169,9 @@ class MenuPane(Pane):
         run_to_end_btn.register_listener(controller)
         self.add_gui_element(run_to_end_btn)
 
+        run_hundred_times_btn = Button(screen, x + 8, y + 226, 128, 32, "Run 100x", "run_hundred_times", None)
+        run_hundred_times_btn.register_listener(controller)
+        self.add_gui_element(run_hundred_times_btn)
 
 class InfoPane(Pane):
 
