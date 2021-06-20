@@ -1,4 +1,5 @@
 import pygame
+import sys
 from map import SimpleSkeld
 from controller import Controller
 
@@ -7,25 +8,8 @@ from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane, KripkePane
 from mlsolver.model import AmongUs as KripkeModel
 from util.util import Message
 
-if __name__ == "__main__":
-    num_crew = 8
-    num_imp = 2
-    num_tasks = 5
 
-    # The map we want to use
-    ss = SimpleSkeld(num_imp + num_crew)
-
-    COOLDOWN = 5
-    STATIONARY_THRESHOLD = 0.5
-
-    #TODO: Change this function to work with multiple impostors
-    km = KripkeModel(num_crew + num_imp)
-
-    # TODO: Implement functioning logger instead of passing None
-
-    # The controller controls the simulation flow
-    controller = Controller(km, ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
-
+def visual_run(controller, km, num_imp):
     pygame.init()
 
     screen = pygame.display.set_mode([1024, 768])
@@ -89,7 +73,6 @@ if __name__ == "__main__":
             elif keys[pygame.K_DOWN]:
                 kp.receive(Message(None, "scroll", {"side": "down"}))
 
-
         screen.fill((255, 255, 255))
 
         tm.draw()
@@ -99,3 +82,50 @@ if __name__ == "__main__":
 
         pygame.display.flip()
         clock.tick(30)
+
+def headless_run(controller, num_steps):
+
+    #TODO: Use TQDM after proper logger implementation
+    for i in range(num_steps):
+        print(f"\033[1;32m Run: {i}\033[0;37m")
+        controller.receive(Message(None, "run_to_end", None))
+
+
+
+if __name__ == "__main__":
+
+    num_crew = 8
+    num_imp = 2
+    num_tasks = 5
+
+    headless = False
+    num_steps_headless = 10
+
+    # Can be expanded easily to allow for more customization from a terminal run
+    for i, arg in enumerate(sys.argv):
+        if arg == "--headless":
+            headless = True
+        elif arg == "--num_steps":
+            num_steps_headless = int(sys.argv[i + 1])
+
+    # The map we want to use
+    ss = SimpleSkeld(num_imp + num_crew)
+
+    COOLDOWN = 5
+    STATIONARY_THRESHOLD = 0.5
+
+    km = KripkeModel(num_crew + num_imp)
+
+    # TODO: Implement functioning logger instead of passing None
+
+    # The controller controls the simulation flow
+    controller = Controller(km, ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
+
+    if not headless:
+        visual_run(controller, km, num_imp)
+    else:
+        headless_run(controller, num_steps_headless)
+
+
+
+
