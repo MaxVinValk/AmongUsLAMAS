@@ -194,10 +194,12 @@ class Controller(LMObject):
                 self.logger.log("Crewmates win!", Logger.LOG | Logger.PRINT_VISUAL)
                 self.is_game_over = True
                 self.count_crewmate_wins = self.count_crewmate_wins + 1
+                return
             elif num_imps >= num_crew:
                 self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
                 self.logger.log("Impostors win!", Logger.LOG | Logger.PRINT_VISUAL)
                 self.is_game_over = True
+                return
 
         # Tasks
         for a in self.agents:

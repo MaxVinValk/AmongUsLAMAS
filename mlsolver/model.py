@@ -8,6 +8,7 @@ from mlsolver.kripke import KripkeStructure, World
 from mlsolver.formula import Atom, And, Not, Or, Box_a, Box_star
 from logger import Logger
 from graphviz import Digraph
+import pygame
 
 import os
 import tempfile
