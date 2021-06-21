@@ -1,7 +1,9 @@
-from agent import Crewmate, Impostor, create_agents
+from agent import create_agents
 from util.util import Message, LMObject
 from collections import Counter
 from enum import Enum
+from logger import Logger
+
 
 class Phase(Enum):
     ACT = 0
@@ -10,15 +12,15 @@ class Phase(Enum):
     VOTE = 3
     CHECK = 4
 
+
 class Controller(LMObject):
     """
         Handles the simulation flow. The simulation occurs in steps, and the flow of the simulation is handled
         by the controller. It is also responsible for checking whether or not the game is over
     """
 
-    # TODO: Fix this hot mess. Currently the controller needs these pieces of info to create a new agentset
     # on reset. Perhaps move to a custom function where we can 'init' agents on their own?
-    def __init__(self, km, game_map, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+    def __init__(self, km, game_map, num_crew, num_imp, num_tasks, num_visuals, cooldown, stat_thres):
         super().__init__()
 
         self.km = km
@@ -26,10 +28,12 @@ class Controller(LMObject):
         self.num_crew = num_crew
         self.num_imp = num_imp
         self.num_tasks = num_tasks
+        self.num_visuals = num_visuals
         self.cooldown = cooldown
         self.stat_thres = stat_thres
-        self.logger = logger
         self.count_crewmate_wins = 0
+
+        self.logger = Logger.get_instance()
 
         self.agents = []
         self.reset_agents()
@@ -41,8 +45,8 @@ class Controller(LMObject):
         self.run_continuously = False
 
     def reset_agents(self):
-        self.agents = create_agents(self.game_map, self.km, self.num_crew, self.num_imp, self.num_tasks, self.cooldown,
-                                    self.stat_thres, self.logger)
+        self.agents = create_agents(self.game_map, self.km, self.num_crew, self.num_imp, self.num_tasks, self.num_visuals,
+                                    self.cooldown, self.stat_thres)
 
     def reset(self):
         """Resets the simulation"""
@@ -59,7 +63,7 @@ class Controller(LMObject):
         if self.is_game_over:
             return
 
-        print(self.phase)
+        self.logger.log(f"{self.phase}", Logger.LOG | Logger.PRINT_VISUAL)
 
         next_phase = (self.phase.value + 1) % len(Phase)
 
@@ -139,14 +143,15 @@ class Controller(LMObject):
 
             # If there is a tie, do not continue voting
             if top_votes[0][1] == top_votes[1][1] and len(top_votes) > 1:
-                print(f"A tie: No agent was voted off.")
+                self.logger.log("A tie: No agent was voted off.", Logger.LOG | Logger.PRINT_VISUAL)
             elif top_votes[0][0] == -1:
                 # Most agents voted for a tie, do not continue voting
-                print(f"Most agents pass: No agent was voted off.")
+                self.logger.log("Most agents pass: No agent was voted off.", Logger.LOG | Logger.PRINT_VISUAL)
             else:
                 # Remove agent with most votes from the game
                 self.__remove_agent_with_id(top_votes[0][0], voted_off=True)
-                print(f"Agent {top_votes[0][0]} received the most votes.")
+                self.logger.log(f"Agent {top_votes[0][0]} received the most votes and is voted off.",
+                                Logger.LOG | Logger.PRINT_VISUAL)
 
         elif self.phase == Phase.CHECK:
             self.check_game_over()
@@ -186,22 +191,20 @@ class Controller(LMObject):
 
             if num_imps == 0:
                 self.send(Message(self, "game_over", {"victor": "crewmates"}))
-                print(f'Crewmates win!')
+                self.logger.log("Crewmates win!", Logger.LOG | Logger.PRINT_VISUAL)
                 self.is_game_over = True
                 self.count_crewmate_wins = self.count_crewmate_wins + 1
             elif num_imps >= num_crew:
                 self.send(Message(self, "game_over", {"victor": "impostor(s)"}))
-                print(f'Imposters win!')
+                self.logger.log("Impostors win!", Logger.LOG | Logger.PRINT_VISUAL)
                 self.is_game_over = True
 
     def __remove_agent_with_id_from_map(self, agent_id, voted_off=False):
-        print(f"Removing agent {agent_id} from the map")
         dead_agent = self.get_agent_with_id(agent_id)
 
         self.game_map.mark_agent_killed(dead_agent, voted_off)
 
     def __remove_agent_with_id_from_set(self, agent_id):
-        print(f"Removing agent {agent_id} from agent update set")
         dead_agent = self.get_agent_with_id(agent_id)
         self.agents.remove(dead_agent);
 
@@ -232,3 +235,5 @@ class Controller(LMObject):
         elif message.name == "run_hundred_times":
             self.reset()
             self.run_hundred_times()
+        elif message.name == "save_run":
+            self.logger.save_logs()

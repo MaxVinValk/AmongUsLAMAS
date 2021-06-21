@@ -1,13 +1,15 @@
 import random
 from abc import ABC, abstractmethod
 from room_events import EventType, RoomEvent
+from logger import Logger
 from mlsolver.formula import *
 
-def create_agents(game_map, km, num_crew, num_imp, num_tasks, cooldown, stat_thres, logger):
+
+def create_agents(game_map, km, num_crew, num_imp, num_tasks, num_visuals, cooldown, stat_thres):
     """Utility function to create an agent set with tasks, impostors"""
-    agents = [Crewmate(x, num_crew, num_imp, game_map, km, logger, num_tasks) for x in range(num_crew)]
+    agents = [Crewmate(x, num_crew, num_imp, game_map, km, num_tasks, num_visuals) for x in range(num_crew)]
     # noinspection PyTypeChecker
-    [agents.append(Impostor(num_crew + x, num_crew, num_imp, game_map, km, logger, cooldown, stat_thres)) for x in range(num_imp)]
+    [agents.append(Impostor(num_crew + x, num_crew, num_imp, game_map, km, cooldown, stat_thres)) for x in range(num_imp)]
 
     return agents
 
@@ -16,13 +18,14 @@ class Agent(ABC):
     """
     An abstract class which contains all functions an agent must have in order to ensure a proper simulation flow
     """
-    def __init__(self, agent_id, num_crew, num_imp, game_map, km, logger):
+    def __init__(self, agent_id, num_crew, num_imp, game_map, km):
         self.agent_id = agent_id
         self.game_map = game_map
         self.km = km
-        self.logger = logger
         self.num_crew = num_crew
         self.num_imp = num_imp
+
+        self.logger = Logger.get_instance()
 
         self.room = game_map.room_start
         self.alive = True
@@ -76,10 +79,10 @@ class Crewmate(Agent):
     This class provides the behaviour of a crewmate in all phases of the simulation
     """
 
-    def __init__(self, agent_id, num_crew, num_imp, game_map, km, logger, num_tasks):
-        super().__init__(agent_id, num_crew, num_imp, game_map, km, logger)
+    def __init__(self, agent_id, num_crew, num_imp, game_map, km, num_tasks, num_visuals):
+        super().__init__(agent_id, num_crew, num_imp, game_map, km)
 
-        self.tasks = game_map.create_tasks_unique(num_tasks)
+        self.tasks = game_map.create_tasks_unique(num_tasks, num_visuals)
         self.goal = None
         self.goal_history = []
 
@@ -103,8 +106,11 @@ class Crewmate(Agent):
     def act(self):
         """Try to complete the goal that is currently set, or else move"""
         if self.goal and self.room is self.goal.room_id:
-            print(
-                f"Crewmate {self.agent_id} completed their goal: {self.goal.name} in {self.game_map.room_names[self.goal.room_id]}")
+            self.logger.log(
+                f"Crewmate {self.agent_id} completed their goal: {self.goal.name} in " +
+                f"{self.game_map.room_names[self.goal.room_id]}",
+                Logger.PRINT_VISUAL | Logger.LOG
+            )
 
             # If we perform an action in a room, we can only see the room in which the action is performed.
             self.location_history.append(self.room)
@@ -121,8 +127,10 @@ class Crewmate(Agent):
             if self.tasks:
                 self.goal = self.tasks.pop()
                 self.goal_history.append(self.goal)
-                print(
-                    f"Crewmate {self.agent_id} set as goal: {self.goal.name} in {self.game_map.room_names[self.goal.room_id]}")
+                self.logger.log(
+                    f"Crewmate {self.agent_id} set as goal: {self.goal.name} in" +
+                    f" {self.game_map.room_names[self.goal.room_id]}",
+                    Logger.LOG | Logger.PRINT_VISUAL)
             else:
                 self.room = self.game_map.move_random(self)
                 self.location_history.append(self.room)
@@ -178,7 +186,10 @@ class Crewmate(Agent):
 
             # Clearing a crewmate by seeing their task:
             elif agent_id_task_witnessed != -1:
-                print(self.agent_id, "witnessed", agent_id_task_witnessed)
+                self.logger.log(f"{self.agent_id} witnessed task {agent_id_task_witnessed}",
+                                Logger.LOG | Logger.PRINT_VISUAL
+                )
+
                 self.km.update_known_crewmate(self.agent_id, agent_id_task_witnessed)
                 self.trusted_agents[agent_id_task_witnessed] = True
 
@@ -192,10 +203,10 @@ class Crewmate(Agent):
             if self.trusted_agents[i] and i is not self.agent_id:
 
                 if self.announcement_set[i] is not None:
-                    print(f"{self.agent_id} trusts {i}")
                     formula = self.announcement_set[i].inner
-
-                    print(f"On formula: {formula}")
+                    self.logger.log(f"{self.agent_id} trusts {i} On formula: {formula}",
+                                    Logger.LOG | Logger.PRINT_VISUAL
+                    )
                     self.km.update(self.agent_id, formula)
 
     def vote(self, agents):
@@ -211,7 +222,7 @@ class Crewmate(Agent):
                 known_impostor = a.agent_id
             elif self.km.suspects(self.agent_id, a.agent_id):
                 suspects.append(a.agent_id)
-                print(f"Crewmate {self.agent_id} suspects {a.agent_id}")
+                self.logger.log(f"Crewmate {self.agent_id} suspects {a.agent_id}", Logger.LOG | Logger.PRINT_VISUAL)
 
         if known_impostor != -1:
             return known_impostor
@@ -225,29 +236,8 @@ class Crewmate(Agent):
             if random.random() < threshold:
                 vote = -1
 
-            print(f"Crewmate {self.agent_id} votes for {vote}\n")
+            self.logger.log(f"Crewmate {self.agent_id} votes for {vote}\n", Logger.PRINT_VISUAL | Logger.LOG)
             return vote
-
-
-
-        # If this is only a single agent, vote for this agent
-        """
-        if len(suspects) == 1:
-            print(f"Crewmate {self.agent_id} votes for {suspects[0]}\n")
-            return suspects[0]
-        else:  
-            # Randomly vote for an agent on the suspect-list
-            vote = random.sample(suspects, 1)[0]
-
-            # If you are not yet sure, there is a 50% probability that you will pass vote
-            # TODO: Could be improved (e.g. less people on list -> more likely to NOT vote pass)
-            threshold = 0.5
-            if random.random() > threshold:
-                vote = -1
-
-            print(f"Crewmate {self.agent_id} votes for {vote}\n")
-            return vote
-        """
 
     def is_impostor(self):
         return False
@@ -274,14 +264,14 @@ class Crewmate(Agent):
 
 class Impostor(Agent):
 
-    def __init__(self, agent_id, num_crew, num_imp, game_map, km, logger, cooldown, stat_threshold):
+    def __init__(self, agent_id, num_crew, num_imp, game_map, km, cooldown, stat_threshold):
         self.cooldown = cooldown
         self.cooldown_ctr = self.cooldown
 
         # Stationary threshold: Threshold for standing still instead of moving during move function
         self.stat_threshold = stat_threshold
 
-        super().__init__(agent_id, num_crew, num_imp, game_map, km, logger)
+        super().__init__(agent_id, num_crew, num_imp, game_map, km)
 
     def act(self):
         """Try to kill if possible, otherwise, move about randomly"""
@@ -312,7 +302,7 @@ class Impostor(Agent):
 
                     self.game_map.add_room_event(self.room, RoomEvent(EventType.KILL, self.agent_id, "Kill"))
 
-                    print(f"Impostor {self.agent_id} kills {to_kill}!")
+                    self.logger.log(f"Impostor {self.agent_id} kills {to_kill}!", Logger.LOG | Logger.PRINT_VISUAL)
 
                     self.reset_cooldown()
 
@@ -349,7 +339,7 @@ class Impostor(Agent):
         # TODO: Extend with HOL (e.g. Imposter votes for most sus crewmate)
         
         vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
-        print(f"Imposter {self.agent_id} votes for {vote}")
+        self.logger.log(f"Imposter {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
         return vote
 
     def round_reset(self):

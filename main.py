@@ -2,9 +2,11 @@ import pygame
 import sys
 from map import SimpleSkeld
 from controller import Controller
+from logger import Logger
+from tqdm import tqdm
 
 from gui.tabmanager import TabManager
-from pane import Pane, SimpleSkeldPane, MenuPane, InfoPane, KripkePane
+from pane import SimpleSkeldPane, MenuPane, InfoPane, KripkePane
 from mlsolver.model import AmongUs as KripkeModel
 from util.util import Message
 
@@ -83,23 +85,31 @@ def visual_run(controller, km, num_imp):
         pygame.display.flip()
         clock.tick(30)
 
-def headless_run(controller, num_steps):
 
-    #TODO: Use TQDM after proper logger implementation
-    for i in range(num_steps):
-        print(f"\033[1;32m Run: {i}\033[0;37m")
+def headless_run(controller, num_steps, file_name=None):
+    logger = Logger.get_instance()
+
+    for i in tqdm(range(num_steps)):
+        logger.log(f"Run: {i}", Logger.LOG)
         controller.receive(Message(None, "run_to_end", None))
 
+    logger.save_logs(file_name)
 
 
 if __name__ == "__main__":
 
     num_crew = 8
-    num_imp = 2
+    num_imp = 2  # Currently cannot be varied. Keep at two
+
     num_tasks = 5
+    num_visuals = 4
 
     headless = False
     num_steps_headless = 10
+    log_file_name = None
+
+    COOLDOWN = 5
+    STATIONARY_THRESHOLD = 0.5
 
     # Can be expanded easily to allow for more customization from a terminal run
     for i, arg in enumerate(sys.argv):
@@ -107,25 +117,30 @@ if __name__ == "__main__":
             headless = True
         elif arg == "--num_steps":
             num_steps_headless = int(sys.argv[i + 1])
+        elif arg == "--log_name":
+            log_file_name = sys.argv[i + 1]
+        elif arg == "--visuals":
+            num_visuals = int(num_visuals)
+        elif arg == "--num_tasks":
+            num_tasks = int(num_tasks)
+        elif arg == "--num_crew":
+            num_crew = int(sys.argv[i + 1])
+
+    if num_visuals > num_tasks:
+        print("Visuals cannot be set higher than the number of tasks available")
+        exit(1)
 
     # The map we want to use
     ss = SimpleSkeld(num_imp + num_crew)
-
-    COOLDOWN = 5
-    STATIONARY_THRESHOLD = 0.5
-
     km = KripkeModel(num_crew + num_imp)
 
-    # TODO: Implement functioning logger instead of passing None
-
     # The controller controls the simulation flow
-    controller = Controller(km, ss, num_crew, num_imp, num_tasks, COOLDOWN, STATIONARY_THRESHOLD, None)
+    controller = Controller(km, ss, num_crew, num_imp, num_tasks, num_visuals, COOLDOWN, STATIONARY_THRESHOLD)
+
+    logger = Logger.get_instance()
+    logger.set_headless_mode(headless)
 
     if not headless:
         visual_run(controller, km, num_imp)
     else:
-        headless_run(controller, num_steps_headless)
-
-
-
-
+        headless_run(controller, num_steps_headless, log_file_name)

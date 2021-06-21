@@ -173,6 +173,10 @@ class MenuPane(Pane):
         run_hundred_times_btn.register_listener(controller)
         self.add_gui_element(run_hundred_times_btn)
 
+        save_run_btn = Button(screen, x + 8, y + 264, 128, 32, "Save run data", "save_run", None)
+        save_run_btn.register_listener(controller)
+        self.add_gui_element(save_run_btn)
+
 class InfoPane(Pane):
 
     def __init__(self, controller, screen, x, y, w, h, color):

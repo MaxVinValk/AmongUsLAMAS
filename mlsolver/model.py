@@ -6,11 +6,12 @@ Module contains a simple Kripke model for Among Us and
 from util.util import LMObject
 from mlsolver.kripke import KripkeStructure, World
 from mlsolver.formula import Atom, And, Not, Or, Box_a, Box_star
-import numpy as np
-import pygame
-import os
+from logger import Logger
 from graphviz import Digraph
+
+import os
 import tempfile
+import numpy as np
 
 
 def add_reflexive_edges(worlds, relations):
@@ -43,9 +44,12 @@ def kripke_structure_solve_a(self, agent, formula, print_statement=False):
     https://github.com/JohnRoyale/MAS2018/blob/master/mlsolver/kripke.py#L36
     it is necessary to be able to execute updates for only one agent in multi-agent Kripke structures
     """
+
+    logger = Logger.get_instance()
+
     nodes_to_remove = self.nodes_not_follow_formula(formula)
     if print_statement and len(nodes_to_remove) != 0:
-        print("Removing nodes: {}".format(nodes_to_remove))
+        logger.log("Removing nodes: {}".format(nodes_to_remove), Logger.PRINT_VISUAL | Logger.LOG)
     if len(nodes_to_remove) == 0:
         return self
 

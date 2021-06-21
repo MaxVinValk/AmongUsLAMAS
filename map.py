@@ -78,12 +78,19 @@ class Map(ABC):
     def clear_corpses(self):
         self.corpses = [[] for _ in range(self.room_nums)]
 
-    def create_tasks_unique(self, num_tasks):
+    def create_tasks_unique(self, num_tasks, num_visuals):
         if num_tasks > len(self.tasks):
             print(f"Asked for {num_tasks} unique tasks, but there are only {len(num_tasks)} available")
             exit(1)
 
-        return random.sample(self.tasks, num_tasks)
+        tasks = random.sample(self.tasks, num_tasks)
+
+        # Set visual
+        for i in range(len(tasks)):
+            if i < num_visuals:
+                tasks[i].is_visual = True
+            else:
+                tasks[i].is_visual = False
 
     def move_to_meeting_room(self, agent):
 
