@@ -28,6 +28,7 @@ class Logger:
         else:
             Logger.__instance = self
 
+        self.run_info = {}
         self.messages = []
         self.headless_mode = False
 
@@ -48,6 +49,9 @@ class Logger:
             else:
                 print(msg)
 
+    def add_run_info(self, key, value):
+        self.run_info[key] = value
+
     def get_logs(self):
         return self.messages
 
@@ -57,6 +61,6 @@ class Logger:
             file_name = datetime.now().strftime("%y_%m_%d__%H-%M-amongus")
 
         with open(file_name, "wb") as f:
-            pickle.dump(self.messages, f)
+            pickle.dump({"run_info": self.run_info, "logs": self.messages}, f)
 
 

@@ -246,6 +246,9 @@ class Crewmate(Agent):
         super().round_reset()
         self.goal_history.clear()
 
+    def has_tasks_left(self):
+        return len(self.tasks) > 0
+
     def get_info(self):
 
         goal_line = ""

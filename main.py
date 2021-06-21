@@ -88,6 +88,7 @@ def visual_run(controller, km, num_imp):
 
 def headless_run(controller, num_steps, file_name=None):
     logger = Logger.get_instance()
+    logger.add_run_info("num_sim_runs", num_steps)
 
     for i in tqdm(range(num_steps)):
         logger.log(f"Run: {i}", Logger.LOG)
@@ -108,8 +109,8 @@ if __name__ == "__main__":
     num_steps_headless = 10
     log_file_name = None
 
-    COOLDOWN = 5
-    STATIONARY_THRESHOLD = 0.5
+    cooldown = 5
+    stationary_threshold = 0.5
 
     # Can be expanded easily to allow for more customization from a terminal run
     for i, arg in enumerate(sys.argv):
@@ -125,6 +126,10 @@ if __name__ == "__main__":
             num_tasks = int(num_tasks)
         elif arg == "--num_crew":
             num_crew = int(sys.argv[i + 1])
+        elif arg == "--cooldown":
+            cooldown = int(sys.argv[i + 1])
+        elif arg == "--stat_thres":
+            stationary_threshold = int(sys.argv[i + 1])
 
     if num_visuals > num_tasks:
         print("Visuals cannot be set higher than the number of tasks available")
@@ -135,10 +140,18 @@ if __name__ == "__main__":
     km = KripkeModel(num_crew + num_imp)
 
     # The controller controls the simulation flow
-    controller = Controller(km, ss, num_crew, num_imp, num_tasks, num_visuals, COOLDOWN, STATIONARY_THRESHOLD)
+    controller = Controller(km, ss, num_crew, num_imp, num_tasks, num_visuals, cooldown, stationary_threshold)
 
     logger = Logger.get_instance()
     logger.set_headless_mode(headless)
+
+    # Dump run statistics into file so that it is easy to find back later during analysis
+    logger.add_run_info("num_crew", num_crew)
+    logger.add_run_info("num_imp", num_imp)
+    logger.add_run_info("num_tasks", num_tasks)
+    logger.add_run_info("num_visuals", num_visuals)
+    logger.add_run_info("cooldown", cooldown)
+    logger.add_run_info("stat_thres", stationary_threshold)
 
     if not headless:
         visual_run(controller, km, num_imp)

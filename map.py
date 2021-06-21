@@ -92,6 +92,8 @@ class Map(ABC):
             else:
                 tasks[i].is_visual = False
 
+        return tasks
+
     def move_to_meeting_room(self, agent):
 
         self.rooms[agent.room][agent.agent_id] = 0

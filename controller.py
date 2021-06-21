@@ -199,6 +199,18 @@ class Controller(LMObject):
                 self.logger.log("Impostors win!", Logger.LOG | Logger.PRINT_VISUAL)
                 self.is_game_over = True
 
+        # Tasks
+        for a in self.agents:
+            if not a.is_impostor():
+                if a.has_tasks_left():
+                    return
+
+        # If we reach this, no agents have tasks left
+        self.send(Message(self, "game_over", {"victor": "crewmates"}))
+        self.logger.log("Crewmates win! (tasks)", Logger.LOG | Logger.PRINT_VISUAL)
+        self.is_game_over = True
+        self.count_crewmate_wins += 1
+
     def __remove_agent_with_id_from_map(self, agent_id, voted_off=False):
         dead_agent = self.get_agent_with_id(agent_id)
 
@@ -206,7 +218,7 @@ class Controller(LMObject):
 
     def __remove_agent_with_id_from_set(self, agent_id):
         dead_agent = self.get_agent_with_id(agent_id)
-        self.agents.remove(dead_agent);
+        self.agents.remove(dead_agent)
 
     def __remove_agent_with_id(self, agent_id, voted_off=False):
         self.__remove_agent_with_id_from_map(agent_id, voted_off)
