@@ -1,4 +1,7 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import pickle
+import os
 
 def load_log(file_path):
     with open(file_path, "rb") as f:
@@ -26,3 +29,51 @@ def find_log_around(log, sentence_to_find, num_context=3):
             print("--------------------")
             for j in range(i-num_context, min(i+num_context+1, len(log["logs"]))):
                 print(f"{j}| {log['logs'][j]}")
+
+
+def plot_variable(name_of_variable, log_file_paths=None):
+    if log_file_paths is None:
+        log_file_paths = []
+        for file in os.listdir("./"):
+            if file.endswith(".amongus"):
+                log_file_paths.append(file)
+
+    loaded_logs = []
+    for file_path in log_file_paths:
+        loaded_logs.append(load_log(file_path))
+
+    results = {}
+    for log in loaded_logs:
+        results[log["run_info"][name_of_variable]] = get_wins(log)
+
+    sorted_keys = sorted(results.keys())
+
+    wins_crew_vote = [results[k][0] for k in sorted_keys]
+    wins_crew_tasks = [results[k][1] for k in sorted_keys]
+    wins_impostors = [results[k][2] for k in sorted_keys]
+
+    y_pos = np.arange(len(sorted_keys))
+    plt.rcdefaults()
+    fig, ax = plt.subplots()
+
+    h = 1
+
+    ax.barh(y_pos - h/3, wins_crew_vote, height=h/5, label="crew (vote)")
+    ax.barh(y_pos, wins_crew_tasks, height=h/5, label="crew (task)")
+    ax.barh(y_pos + h/3, wins_impostors, height=h/5, label="imps")
+
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(sorted_keys)
+    ax.invert_yaxis()
+
+    ax.set_xlabel("Count")
+    ax.set_title(f"Outcomes of wins for varying {name_of_variable}")
+
+    ax.legend()
+
+    plt.show()
+
+
+
+
+
