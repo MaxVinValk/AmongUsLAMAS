@@ -98,7 +98,7 @@ class Crewmate(Agent):
         pass
 
     # TODO
-    def update_knowledge_after_discussion(self, ):
+    def update_knowledge_after_discussion(self, km):
         # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces
         # they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter
         pass
@@ -220,24 +220,25 @@ class Crewmate(Agent):
         for a in agents:
             if self.km.knows_imp(self.agent_id, a.agent_id):
                 known_impostor = a.agent_id
+                self.logger.log(f"Crewmate {self.agent_id} suspects {a.agent_id}", Logger.LOG | Logger.PRINT_VISUAL)
             elif self.km.suspects(self.agent_id, a.agent_id):
                 suspects.append(a.agent_id)
                 self.logger.log(f"Crewmate {self.agent_id} suspects {a.agent_id}", Logger.LOG | Logger.PRINT_VISUAL)
 
         if known_impostor != -1:
-            return known_impostor
+            vote = known_impostor
         else:
             # Randomly vote for an agent on the suspect-list
             vote = random.sample(suspects, 1)[0]
 
-            # If you are not yet sure, there is a 50% probability that you will pass vote
-            # TODO: Could be improved (e.g. less people on list -> more likely to NOT vote pass)
+            # If you are not yet sure, there is a probability that you vote pass. 
+            # This probability increases if you suspect more people (and are therefore less sure)
             threshold = (len(suspects) / (self.num_crew + self.num_imp)) * 0.5
             if random.random() < threshold:
                 vote = -1
 
-            self.logger.log(f"Crewmate {self.agent_id} votes for {vote}\n", Logger.PRINT_VISUAL | Logger.LOG)
-            return vote
+        self.logger.log(f"Crewmate {self.agent_id} votes for {vote}\n", Logger.PRINT_VISUAL | Logger.LOG)
+        return vote
 
     def is_impostor(self):
         return False
@@ -270,6 +271,7 @@ class Impostor(Agent):
     def __init__(self, agent_id, num_crew, num_imp, game_map, km, cooldown, stat_threshold):
         self.cooldown = cooldown
         self.cooldown_ctr = self.cooldown
+        self.target = -1
 
         # Stationary threshold: Threshold for standing still instead of moving during move function
         self.stat_threshold = stat_threshold
@@ -327,21 +329,46 @@ class Impostor(Agent):
         return -1
 
     def announce(self):
-        # TODO: Announce something at random
+        # The imposter never announces anything, as this would introduce false knowledge
         pass
 
     def receive(self, announced):
         super().receive(announced)
+        print("announced", self.announcement_set)
         # The impostor does not do anything with announced information (for now)
         # But: It does need to know who is dead for voting
 
+    def choose_target(self, agents):
+        """The impostor chooses a target to vote off. It chooses the crewmate
+        that suspects the least number of people, e.g. the one that is most onto the impostors."""
+
+        number_of_suspects = [0]*(len(agents))
+        number_of_suspects_per_agent = []
+
+        index = 0
+        for a1 in agents:
+            if not a1.is_impostor():
+                for a2 in agents:
+                    if self.km.suspects(a1.agent_id, a2.agent_id):
+                        number_of_suspects[index] = number_of_suspects[index] + 1
+            else:
+                number_of_suspects[index] = 999999
+            number_of_suspects_per_agent.append((a1.agent_id,number_of_suspects[index]))
+            index = index + 1
+
+        self.target = min(number_of_suspects_per_agent, key = lambda t: t[1])[0]
 
     def vote(self, agents):
-        """The imposter votes for a random living agent."""
-        # TODO: Extend to work for multiple impostors
-        # TODO: Extend with HOL (e.g. Imposter votes for most sus crewmate)
+        """The imposter votes the agents that are closest to finding them. 
+        If there is no such agent, vote for a random living agent that is not an imposter."""
+
+        # If the imposters have a set target, vote that
+        if self.target != -1:
+            vote = self.target
+        else: # Vote a random living agents
+            vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
         
-        vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
+        self.target = -1
         self.logger.log(f"Imposter {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
         return vote
 

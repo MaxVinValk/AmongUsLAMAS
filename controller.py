@@ -134,12 +134,16 @@ class Controller(LMObject):
             # [a.update_knowledge_after_discussion(self.agents) for a in self.agents if not a.is_impostor()]
 
         elif self.phase == Phase.VOTE:
+            # Let the impostors choose a new target: The one who suspects least agents
+            [a.choose_target(self.agents) for a in self.agents if a.is_impostor()]
+
             # Gather all votes
             votes = [a.vote(self.agents) for a in self.agents]
 
             # Get the ID with most votes
             vote_count = Counter(votes)
             top_votes = vote_count.most_common(2)
+
 
             # If there is a tie, do not continue voting
             if top_votes[0][1] == top_votes[1][1] and len(top_votes) > 1:
@@ -152,6 +156,7 @@ class Controller(LMObject):
                 self.__remove_agent_with_id(top_votes[0][0], voted_off=True)
                 self.logger.log(f"Agent {top_votes[0][0]} received the most votes and is voted off.",
                                 Logger.LOG | Logger.PRINT_VISUAL)
+
 
         elif self.phase == Phase.CHECK:
             self.check_game_over()
