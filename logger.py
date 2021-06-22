@@ -58,7 +58,9 @@ class Logger:
     def save_logs(self, file_name=None):
 
         if file_name is None:
-            file_name = datetime.now().strftime("%y_%m_%d__%H-%M-amongus")
+            file_name = datetime.now().strftime("%y_%m_%d__%H-%M.amongus")
+        elif not file_name.endswith(".amongus"):
+            file_name = file_name + ".amongus"
 
         with open(file_name, "wb") as f:
             pickle.dump({"run_info": self.run_info, "logs": self.messages}, f)
