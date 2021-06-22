@@ -129,7 +129,7 @@ if __name__ == "__main__":
         elif arg == "--cooldown":
             cooldown = int(sys.argv[i + 1])
         elif arg == "--stat_thres":
-            stationary_threshold = int(sys.argv[i + 1])
+            stationary_threshold = float(sys.argv[i + 1])
 
     if num_visuals > num_tasks:
         print("Visuals cannot be set higher than the number of tasks available")
