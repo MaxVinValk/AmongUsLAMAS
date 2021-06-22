@@ -334,9 +334,7 @@ class Impostor(Agent):
 
     def receive(self, announced):
         super().receive(announced)
-        print("announced", self.announcement_set)
-        # The impostor does not do anything with announced information (for now)
-        # But: It does need to know who is dead for voting
+        self.logger.log(f"Announced: {self.announcement_set}", Logger.LOG | Logger.PRINT_VISUAL)
 
     def choose_target(self, agents):
         """The impostor chooses a target to vote off. It chooses the crewmate
