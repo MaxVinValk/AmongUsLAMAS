@@ -181,7 +181,7 @@ class Controller(LMObject):
         self.count_crewmate_wins = 0
 
     def check_game_over(self):
-        if self.is_game_over == False:
+        if not self.is_game_over:
             num_imps = 0
             for a in self.agents:
                 if a.is_impostor():
@@ -201,17 +201,17 @@ class Controller(LMObject):
                 self.is_game_over = True
                 return
 
-        # Tasks
-        for a in self.agents:
-            if not a.is_impostor():
-                if a.has_tasks_left():
-                    return
+            # Tasks
+            for a in self.agents:
+                if not a.is_impostor():
+                    if a.has_tasks_left():
+                        return
 
-        # If we reach this, no agents have tasks left
-        self.send(Message(self, "game_over", {"victor": "crewmates"}))
-        self.logger.log("Crewmates win! (tasks)", Logger.LOG | Logger.PRINT_VISUAL)
-        self.is_game_over = True
-        self.count_crewmate_wins += 1
+            # If we reach this, no agents have tasks left
+            self.send(Message(self, "game_over", {"victor": "crewmates"}))
+            self.logger.log("Crewmates win! (tasks)", Logger.LOG | Logger.PRINT_VISUAL)
+            self.is_game_over = True
+            self.count_crewmate_wins += 1
 
     def __remove_agent_with_id_from_map(self, agent_id, voted_off=False):
         dead_agent = self.get_agent_with_id(agent_id)
