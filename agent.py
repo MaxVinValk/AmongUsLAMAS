@@ -340,8 +340,21 @@ class Impostor(Agent):
         """The imposter votes for a random living agent."""
         # TODO: Extend to work for multiple impostors
         # TODO: Extend with HOL (e.g. Imposter votes for most sus crewmate)
-        
-        vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
+
+        vote = None
+
+        for a in agents:
+            if a.is_impostor():
+                continue
+
+            # If I know that someone else knows that I am the impostor, then they should be voted on
+            if self.km.knows_knows_imp(a.agent_id, self.agent_id):
+                vote = a.agent_id
+
+        if vote is None:
+            vote = random.sample(
+                [a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
+
         self.logger.log(f"Imposter {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
         return vote
 

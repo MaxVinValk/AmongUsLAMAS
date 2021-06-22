@@ -159,6 +159,11 @@ class AmongUs(LMObject):
         sentence = Not(Box_a(str(observer), Not(Atom("IsImp:{}".format(other)))))
         return sentence.semantic(self.kripke_structure, self.real_world)
 
+    # If it holds that: other is an impostor and knows that the observer knows that the other is an impostor
+    def knows_knows_imp(self, observer, other):
+        sentence = Box_a(str(other), Box_a(str(observer), Atom(f"IsImp:{other}")))
+        return sentence.semantic(self.kripke_structure, self.real_world)
+
     def knows_imp(self, observer, other):
         sentence = Box_a(str(observer), Atom(f"IsImp:{other}"))
         return sentence.semantic(self.kripke_structure, self.real_world)
