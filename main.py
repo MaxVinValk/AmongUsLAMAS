@@ -121,9 +121,9 @@ if __name__ == "__main__":
         elif arg == "--log_name":
             log_file_name = sys.argv[i + 1]
         elif arg == "--visuals":
-            num_visuals = int(num_visuals)
+            num_visuals = int(sys.argv[i + 1])
         elif arg == "--num_tasks":
-            num_tasks = int(num_tasks)
+            num_tasks = int(sys.argv[i + 1])
         elif arg == "--num_crew":
             num_crew = int(sys.argv[i + 1])
         elif arg == "--cooldown":
