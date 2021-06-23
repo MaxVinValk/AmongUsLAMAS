@@ -67,9 +67,8 @@ class Box_a:
                 result = result and self.inner.semantic(ks, relation[1])
         return result
 
-    # TODO
     def __eq__(self, other):
-        raise NotImplementedError
+        return isinstance(other, Box_a) and self.inner == other.inner and self.agent == other.agent
 
     def __str__(self):
         if isinstance(self.inner, Atom):
@@ -94,13 +93,14 @@ class Box_star:
             f = And(f, Box_a(agents, self.inner))
         return f.semantic(ks, world_to_test)
 
-    # TODO
     def __eq__(self, other):
-        raise NotImplementedError
+        return isinstance(other, Box_star) and self.inner == other.inner
 
-    # TODO
     def __str__(self):
-        raise NotImplementedError
+        if isinstance(self.inner, Atom):
+            return u"\u2610*" + " " + str(self.inner)
+        else:
+            return u"\u2610*" + "(" + str(self.inner) + ")"
 
 
 class Diamond:
@@ -144,13 +144,14 @@ class Diamond_a:
                 result = result or self.inner.semantic(ks, relation[1])
         return result
 
-    # TODO
     def __eq__(self, other):
-        raise NotImplementedError
+        return isinstance(other, Diamond_a) and self.inner == other.inner and self.agent == other.agent
 
-    # TODO
     def __str__(self):
-        raise NotImplementedError
+        if isinstance(self.inner, Atom):
+            return f"M_{self.agent} " + str(self.inner)
+        else:
+            return f"M_{self.agent}(" + str(self.inner) + ")"
 
 
 class Implies:

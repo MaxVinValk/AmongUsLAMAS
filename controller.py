@@ -122,7 +122,7 @@ class Controller(LMObject):
             [a.round_reset() for a in self.agents]
 
             # Discussing takes two phases
-            # TODO: Consider multi-round announcements? It may be the case that after 1 announcement,
+            # IDEA: Consider multi-round announcements? It may be the case that after 1 announcement
             # another agent will obtain the ability to announce something else. Needs to be investigated further.
             announced = [None for _ in range(self.num_imp + self.num_crew)]
             for a in self.agents:

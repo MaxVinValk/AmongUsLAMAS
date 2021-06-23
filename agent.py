@@ -86,22 +86,8 @@ class Crewmate(Agent):
         self.goal = None
         self.goal_history = []
 
-        # TODO: look at this
-        self.other_is_imposter = {}
-
         self.trusted_agents = [False for _ in range(self.num_crew + num_imp)]
         self.trusted_agents[self.agent_id] = True
-
-    # TODO
-    def update_knowledge_before_discussion(self, km):
-        # \item Dead agents must be crewmates: A1 is dead $\rightarrow$ all A know that A1 a crewmate
-        pass
-
-    # TODO
-    def update_knowledge_after_discussion(self, km):
-        # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces
-        # they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter
-        pass
 
     def act(self):
         """Try to complete the goal that is currently set, or else move"""
@@ -210,7 +196,7 @@ class Crewmate(Agent):
                     self.km.update(self.agent_id, formula)
 
     def vote(self, agents):
-        """Crewmates vote for an agent if they're sure they are the imposter. 
+        """Crewmates vote for an agent if they're sure they are the imposter.
         Otherwise, they have a chance of either voting an agent that they still suspect,
         or passing."""
 
@@ -231,7 +217,7 @@ class Crewmate(Agent):
             # Randomly vote for an agent on the suspect-list
             vote = random.sample(suspects, 1)[0]
 
-            # If you are not yet sure, there is a probability that you vote pass. 
+            # If you are not yet sure, there is a probability that you vote pass.
             # This probability increases if you suspect more people (and are therefore less sure)
             threshold = (len(suspects) / (self.num_crew + self.num_imp)) * 0.5
             if random.random() < threshold:
@@ -256,7 +242,7 @@ class Crewmate(Agent):
         if self.goal is None:
             goal_line = "No current goal"
         else:
-            goal_line = f"Current goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}"
+            goal_line = f"Current goal: {self.goal.name} in {self.game_map.room_names[self.goal.room_id]}"
 
         return [
             f"Agent {self.agent_id} (Crewmate)",
@@ -287,7 +273,7 @@ class Impostor(Agent):
             num_others = sum(current_room) - 1
 
             if num_others:
-                # TODO: Find a more elegant formula here?
+                # How likely it is to kill is proportional to the amount of other people present in the room
                 threshold = 1 - (num_others / len(current_room))
 
                 if random.random() < threshold:
@@ -357,7 +343,7 @@ class Impostor(Agent):
         self.target = min(number_of_suspects_per_agent, key = lambda t: t[1])[0]
 
     def vote(self, agents):
-        """The imposter votes the agents that are closest to finding them. 
+        """The imposter votes the agents that are closest to finding them.
         If there is no such agent, vote for a random living agent that is not an imposter."""
 
         # If the imposters have a set target, vote that
@@ -365,7 +351,7 @@ class Impostor(Agent):
             vote = self.target
         else: # Vote a random living agents
             vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
-        
+
         self.target = -1
         self.logger.log(f"Imposter {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
         return vote

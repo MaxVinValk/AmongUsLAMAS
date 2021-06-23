@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from gui.tabmanager import TabManager
 from pane import SimpleSkeldPane, MenuPane, InfoPane, KripkePane
-from mlsolver.model import AmongUs as KripkeModel
+from mlsolver.model import AmongUsTwoImp, AmongUsOneImp
 from util.util import Message
 
 
@@ -100,7 +100,7 @@ def headless_run(controller, num_steps, file_name=None):
 if __name__ == "__main__":
 
     num_crew = 8
-    num_imp = 2  # Currently cannot be varied. Keep at two
+    num_imp = 2 # Currently one and two are accepted values
 
     num_tasks = 10
     num_visuals = 4
@@ -126,6 +126,8 @@ if __name__ == "__main__":
             num_tasks = int(sys.argv[i + 1])
         elif arg == "--num_crew":
             num_crew = int(sys.argv[i + 1])
+        elif arg == "--num_imp":
+            num_imp = int(sys.argv[i + 1])
         elif arg == "--cooldown":
             cooldown = int(sys.argv[i + 1])
         elif arg == "--stat_thres":
@@ -135,9 +137,17 @@ if __name__ == "__main__":
         print("Visuals cannot be set higher than the number of tasks available")
         exit(1)
 
+    if not 0 < num_imp <= 2:
+        print("One or two impostors are supported.")
+        exit(1)
+
     # The map we want to use
-    ss = SimpleSkeld(num_imp + num_crew)
-    km = KripkeModel(num_crew + num_imp)
+    ss = SimpleSkeld(num_crew + num_imp)
+
+    if num_imp == 1:
+        km = AmongUsOneImp(num_crew + num_imp)
+    else:
+        km = AmongUsTwoImp(num_crew + num_imp)
 
     # The controller controls the simulation flow
     controller = Controller(km, ss, num_crew, num_imp, num_tasks, num_visuals, cooldown, stationary_threshold)
