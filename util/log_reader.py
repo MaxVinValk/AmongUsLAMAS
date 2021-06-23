@@ -54,9 +54,9 @@ def plot_variable(name_of_variable, log_file_paths):
 
     h = 1
 
-    ax.barh(y_pos - h/3, wins_crew_vote, height=h/5, label="crew (vote)")
+    ax.barh(y_pos - h/4, wins_crew_vote, height=h/5, label="crew (vote)")
     ax.barh(y_pos, wins_crew_tasks, height=h/5, label="crew (task)")
-    ax.barh(y_pos + h/3, wins_impostors, height=h/5, label="imps")
+    ax.barh(y_pos + h/4, wins_impostors, height=h/5, label="imps")
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(sorted_keys)
