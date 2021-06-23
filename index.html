@@ -94,7 +94,7 @@ body {
   <a href="#kripke_model">Model</a>
   <a href="#knowledge_types">Knowledge</a>
   <a href="#reasoning_rules">Rules</a>
-  <!-- <a href="#findings">Findings</a> -->
+  <a href="#findings">Findings</a>
   <a href="#technical_details">Technical Details</a>
   <a href="#extended-knowledge-model-movement-between-rooms">Extensions</a>
   <a href="https://github.com/MaxVinValk/AmongUsLAMAS">GitHub</a>
@@ -102,73 +102,80 @@ body {
 
 <div class="content">
   <a id="what_is_among_us"></a>
-  <h3>What is Among Us?</h3>
-  <p>In this game, each agent gets assigned a role: either crewmate or imposter. As a crewmate, your objective is to complete tasks to safe the ship. As an imposter, you have to prevent this from happening by killing the crewmates without anyone noticing.</p>
-  <p>In short, the game exists of two phases: playing and communicating. In the first phase, all agents can walk around a map and perform several actions, such as performing a task to help the ship when you are a crewmate, or killing off a crewmate when you are an imposter. The latter, communication, phase is triggered when a crewmate finds a dead crewmate. In this phase, all agents share their last location and their knowledge about which agents are safe or not. The tricky part here is that the crewmates share this truthfully, but the imposter does not. The crewmates therefore have to figure out who is the corrupt agent by either catching them in the act of killing a crewmate, or catching them in a lie. They also have to reason with the knowledge of the other agents, but they have to watch out not to reason with the false imposter's announcements.</p>
-  
+  <h2>What is Among Us?</h2>
+  <p>In this game, each agent gets assigned a role: either crewmate or impostor. As a crewmate, your objective is to complete tasks to safe the ship. As an impostor, you have to prevent this from happening by killing the crewmates without anyone noticing.</p>
+  <p>In short, the game exists of two phases: playing and communicating. In the first phase, all agents can walk around a map and perform several actions, such as performing a task to help the ship when you are a crewmate, or killing off a crewmate when you are an impostor. The latter, communication, phase is triggered when a crewmate finds a dead crewmate. In this phase, all agents share their last location and their knowledge about which agents are safe or not. The tricky part here is that the crewmates share this truthfully, but the impostor does not. The crewmates therefore have to figure out who is the corrupt agent by either catching them in the act of killing a crewmate, or catching them in a lie. They also have to reason with the knowledge of the other agents, but they have to watch out not to reason with the false impostor's announcements.</p>
+ 
   <h4>Formalizing Among Us</h4>
-  <p><strong>Action Phase</strong>: The action phase consists out of two phases itself: acting and observing. In the first phase, all agents can either move to an adjacent room or perform an action, which is a task if they are crewmate, or kill if they are imposter. They can also choose to perform no action and not move. This phase is repeated until a crewmate runs into a dead body, in which case the agent can report the body at the end of the action phase. This triggers the discussion phase.<br />
-    <p></p><strong>Discussion Phase</strong>: The discussion phase is started with an announcement of which agent has died and in which room. Then, each agent announces their location at the last five (exact number to be defined) timesteps. In case the imposter has to announce they were last in the room where the dead body was now found, the imposter will instead announce a random location. Every agent can then reason using the ’catch in a lie’ rule, and finally present the agents that they still consider to be possible imposters. The imposter here announces all remaining agents minus one random agent each discussion phase. <br />
-    <p></p><strong>Voting Phase</strong>: In the voting phase, initially, we plan to model that each agent only votes if they know for sure who the imposter is. Otherwise, they skip the vote. If the majority then votes out the imposter, the crewmates win. We can experiment with the voting behaviour of the impostor and with different voting strategies for the crewmates. For example, agents could vote randomly on agents that they still consider suspicious instead of skipping.</p>
-    <p></p><p>The game can end in three possible ways:</p>
+
+  <p><strong>Action Phase</strong>: The action phase consists out of two phases itself: acting and observing. In the first phase, all agents can either move to an adjacent room or perform an action, which is a task if they are crewmate, or kill if they are impostor. They can also choose to perform no action and not move. This phase is repeated until a crewmate runs into a dead body, in which case the agent can report the body at the end of the action phase. This triggers the discussion phase.<br />
+    <p>The agents follow a hard-coded strategy to finish their tasks in our implementation. The discussion and voted phase is dynamic, based on what they learned during the game. The impostors move at random.</p>
+    <p>To model the real game, the impostor will have a cooldown of a set number of rounds on their kill-action. When it is capable of killing a crewmate, this action is stochastic. This means that simply being in the same room as another agent without getting killed does not mean that they are a crewmate.</p>
+    
+    <p></p><strong>Discussion Phase</strong>: The discussion phase is started with an announcement of which agent has died and in which room. Then, each crewmate announces for every agent if they already know their role. At the start of the game, when crewmates still have not gained any knowledge, the knowledge of crewmate 1 is modelled as follows in a game with n agents: <span class="math inline">K_1 ((Imp_2 \lor \neg Imp_2) \land (Imp_3 \lor \neg Imp_3) \land ... \land (Imp_n \lor \neg Imp_n))</span>. 
+    
+    <p>Then, when an agent knows that for example <span class="math inline">a_2</span> is an impostor and <span class="math inline">a_3</span> is a crewmate, the knowledge gets updated to <span class="math inline">K_1 ((Imp_2) \land (\neg Imp_3) \land ... \land (Imp_n \lor \neg Imp_n))</span>.</p>
+    
+    <p>Impostors do not announce anything at this stage. Since crewmates only incorporate the knowledge of other agents that they are sure of are also crewmates, the announcements of the impostors would always be ignored and are therefore not of any added value. </p>
+
+    <p></p><strong>Voting Phase</strong>: The crewmates and the impostors have different voting behaviour. Before voting, the crewmates check in the Kripke Model which worlds they still consider to be possible, and therefore also which agents they still suspect. They also check if they are already sure whether an agent is the impostor. If this latter is the case, then they will vote for this agent which they know is the impostor. Otherwise, they randomly vote for an agent which is still on their suspect-list, or they pass. When the list of suspects becomes smaller, so does the chance of crewmates passing. This allows crewmates to be more confident in their guess if there are fewer impostor possibilities. The threshold under which an agent passes is determined by the number of suspects divided by half of the initial agents.         
+
+    <p>The impostors use higher-order knowledge in their voting strategy. Before voting, they determine which crewmate they should vote off by counting the number of suspects these crewmates still have. This number is indirectly announced in the announcement phase, and from this information impostors know what crewmates know. In order to eliminate the highest threats, the impostors vote for the agent that suspects the least number of agents and is therefore closest to finding the impostors. The impostors never vote for fellow impostors.</p>
+    
+    <p>After all votes have been cast, the action with most votes is executed. This means that either an agent is voted off the ship, or the voting round is passed. In case a tie occurs between multiple actions, the voting round also passes. There does not need to be a majority (e.g. more than half of the votes) for an action to be executed.</p>
+
+    
+    <p></p><p></p><strong>Ending conditions</strong>:The game can end in three possible ways:</p>
   <ul>
-  <li><p>The imposter is voted out by the majority, meaning that the crewmates win.</p></li>
-  <li><p>All crewmates completed all of their assigned tasks, meaning that they win.</p></li>
-  <li><p>Only one crewmate is left, which means the imposter wins.</p></li>
+  <li><p>The impostors are voted out, meaning that the crewmates win.</p></li>
+  <li><p>All crewmates completed all of their assigned tasks, meaning that the crewmates win.</p></li>
+  <li><p>An equal number of crewmates and impostors are alive, meaning that the impostors win. In such a situation, the crewmates are not capable of voting of the impostors anymore, assuming that the impostors do not vote for other impostors.</p></li>
   </ul>
-  
+
   <a id="kripke_model"></a>
-  <h3>Kripke Model</h3>
-  <p>Our proposed Kripke model for the overview of the game is relatively simple, as all agents only need to figure out which agent is the imposter. The imposter knows that they are the imposter. Here, all straight lines represent bidirectional arrows. </p>
-  <img src="site_images/KM.jpg" alt="Kripke Model" style="width:auto;height:600px;">
+  <h2>Kripke Model</h2>
+  <p> Our implementation of Among Us can run for either one or two impostor(s). The size of the Kripke Model is also dependent on that. For one impostor, the model has the same number of worlds as there are agents, where each world represents a state where one agent is the impostor. For two impostors, the size of the model is the number of agents times the number of agents minus one, divided by two. In the case of ten agents, this means that there are <span class="math inline">(10*9)/2=45</span> possible worlds. This way, all possible combinations of agents have a single world. This means that <span class="math inline">w_1_2</span> does exist but <span class="math inline">w_2_1</span> does not. As for the relations, for each agent, each world in which that agent is not involved (45-9=36) is connected to all other worlds minus itself (35). Additionally, each world has a reflexive relation to itself. There are therefore <span class="math inline">(36*35)+45=1305</span> relations per agents, so <span class="math inline">10*1305=13050</span> relations in total. At the start of the game, the Kripke Model for ten agents and two impostors looks as follows:</p>
+    <img src="site_images/KMFULL.png" alt="Kripke Model" style="width:auto;height:600px;">
+
+  <p>In the visualization of the world, the reflexive arrows have been left out and the straight lines represent bidirectional arrows. Additionally, the impostor relations have also been left out of the in-game simulation. This is because the impostors do not update these relations, nor are they used by any other agents. This allows for a neater visualisation, as otherwise all relations would still be visible by at the end of the game. At the end of an example run, the Kripke Model then looks like:</p>
+      
+  <img src="site_images/KMEnd.png" alt="Kripke Model" style="width:auto;height:600px;">
 
   <a id="knowledge_types"></a>
-  <h3>Knowledge Types</h3>
-  <p>There are however types of knowledge that can be learned throughout the game. Here, a<sub>1</sub> and a<sub>2</sub> $\in$ set of agents A, x<sub>1</sub> and x<sub>2</sub>$\in$ set of rooms X and y $\in$ set of timesteps Y. These are types of knowledge that can be gained by any crewmate while in the action-phase:</p>
+  <h2>Knowledge Types</h2>
+  <p>There are four basic types of knowledge that can be learned. Here, a<sub>1</sub> and a<sub>2</sub> $\in$ set of agents A, x<sub>1</sub> and x<sub>2</sub>$\in$ set of rooms X and y $\in$ set of timesteps Y. These are types of knowledge that can be gained by any crewmate while in the action-phase:</p>
   <ul>
-      <li>The location of an agent (both itself and other agents). For example, a<sub>1</sub> is in room x<sub>1</sub> at time y.</li>
-      <li>Whether an agent performed a visual task. For example, a<sub>1</sub> performed a visual task in room x<sub>1</sub> at time y.</li>
-  </ul>
-  <p>For both of these types of knowledge to be gained, it is important that a crewmate a<sub>1</sub> is in the same room as agent a<sub>2</sub> (where a<sub>1</sub> <span>&#8800;</span>
-     a<sub>2</sub>) at the same time.
-
-      In the discussion phase, all agents encounter two other possible knowledge types:</p>
-  <ul>
+    <li>Whether an agent performed a visual task. For example, a<sub>1</sub> performed a visual task in room x<sub>1</sub> at time y.</li>
+    <li>Whether an impostor killed a crewmate. For example, a<sub>1</sub> was killed by <sub>2</sub> in room x<sub>1</sub> at time y.</li>
     <li>Whether an agent is dead or alive. For example, a<sub>1</sub> is alive at time y.</li>
-    <li>Announcements of location. For example, a<sub>1</sub> announces that they were in room x at time y.</li>
-
-  </ul>
-  <p> With these different types of knowledge, a crewmate can then reason about the final type of knowledge. Namely, whether another agent is an imposter or not.</p>
+    <li>Whether an agent is an impostor or a crewmate. For example, a<sub>1</sub> is an impostor.</li>
+    </ul>
+  <p>For the first two in these types of knowledge to be gained, it is important that a crewmate a<sub>1</sub> is in the same room as agent a<sub>2</sub> (where a<sub>1</sub> <span>&#8800;</span>
+     a<sub>2</sub>) at the same time. The last knowledge type about whether an agent is an impostor or not can be derived from the first three knowledge types as described in the next sections.</p>
   
   <a id="reasoning_rules"></a>
-  <h3>Reasoning Rules</h3>
-  <p>There are several rules a crewmate (here a<sub>1</sub>) can use to deduct this final important type of knowledge. They are listed as follows:</p>
+  <h2>Reasoning Rules</h2>
+  <p>There are several rules a crewmate (here a<sub>1</sub>) can use to deduct this last type of knowledge about who the impostors are. They are listed as follows:</p>
   <ul>
-      <li>Catching the imposter in the act: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>3</sub> is dead) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is the imposter.</li>
-  
-      <li>Catching the imposter in a lie: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at time y $\land$ a<sub>2</sub> announces they were at room x<sub>2</sub> (x<sub>2</sub> <span>&#8800;</span> x<sub>1</sub>) at y) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is the imposter.</li>
-  
+      <li>Catching the impostor in the act: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>3</sub> is dead) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is the impostor.</li>
+    
       <li>Clearing a crewmate by seeing their task: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>2</sub> performed a visual task in room x<sub>1</sub> at step y) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is a crewmate.</li>
   
       <li>Dead agents must be crewmates: a<sub>1</sub> is dead $\rightarrow$ all a know that a<sub>1</sub> a crewmate.</li>
    
+      <li>Trust friendly announcement: a<sub>1</sub> knows that a<sub>2</sub> is a crewmate, and a<sub>2</sub> announces that theuy know a<sub>3</sub> is a crewmate and a<sub>4</sub> is an impostor. Because of higher order knowledge, a<sub>1</sub> now also knows that a<sub>3</sub> is a crewmate and a<sub>4</sub> is an impostor.</li>
+
       </ul>
-  
-  <p>To model the real game, the imposter will have a cooldown of a set number of rounds on their kill-action. When it is capable of killing a crewmate, this action is stochastic. This means that simply being in the same room as another agent without getting killed does not mean that they are a crewmate. 
-  
-  In our initial knowledge model, the imposter does not yet reason about what the other agents know. We do plan to explore this using higher-order knowledge once the initial project is up and running. </p>
 
-  <p>We also still want to explore the concept of lying for the imposter. This way, the imposter could lie about their last location in case this location was the kill site. We have not implemented or researched this yet.</p>
-
-  <!-- <a id="findings"></a>
-  <h3>Findings</h3> -->
+  <a id="findings"></a>
+  <h2>Findings</h2>
 
   <a id="technical_details"></a>
-  <h3>Techincal Details</h3>
-<p>We have implemented most of the game mechanics and a simple gui in PyGame, and our code can be found in this repository: <a href="https://github.com/MaxVinValk/AmongUsLAMAS">https://github.com/MaxVinValk/AmongUsLAMAS</a>. The agents follow a hard-coded strategy in our implementation, apart from the voting phase. Our next step is to extend the implementation with Kripke models. We use <a href="https://github.com/erohkohl/mlsolver">https://github.com/erohkohl/mlsolver</a> to implement our Kripke model. For now, the model is still simple and only contains knowledge about which agent is the imposter. Later, we will try to extend this Kripke model as described in the next section.</p>
+  <h2>Techincal Details</h2>
+<p>Our code can be found in this repository: <a href="https://github.com/MaxVinValk/AmongUsLAMAS">https://github.com/MaxVinValk/AmongUsLAMAS</a>. We have implemented the game mechanics and a gui in PyGame and the Kripke Model is based on <a href="https://github.com/erohkohl/mlsolver">https://github.com/erohkohl/mlsolver</a>. </p>
 
 <a id="extended-knowledge-model-movement-between-rooms"></a>
-<h3>Extended Knowledge Model: Movement between Rooms</h3>
+<h2>Extended Knowledge Model: Movement between Rooms</h2>
 
 <p>In the basic knowledge model, when a crewmate learns someone was in a room he will take this into consideration, but will not use the movement rules to infer where that person could be in the previous or next step. This information is often relevant, for example when <span class="math inline">a_1</span> sees <span class="math inline">a_2</span> at the left of the map, and in the next time step <span class="math inline">a_3</span> is killed at the right end of the map, this means <span class="math inline">a_1</span> can infer that <span class="math inline">a_2</span> cannot be the killer because he cannot have traveled across the map that quickly. We have thought about ways to extend our approach to make this kind of inference possible, which we might implement and compare if we have the time.</p>
 <p>It is not feasible to construct a single Kripke model encoding the location of all agents at all time steps due to the curse of dimensionality. An alternative is to construct a set of disconnected models representing knowledge about subsets of the propositions about the game world. A reasonable simplification might be to construct one Kripke model for every combination of time step and agent (so for example in a game with 5 agents where 10 time steps have passed, there would be 50 such models). The location model for agent <span class="math inline">a_i</span> at time <span class="math inline">t</span> will be denoted <span class="math inline">M^\mathsf{loc}_{a_i,t}</span> and has the following propositional atoms:</p>

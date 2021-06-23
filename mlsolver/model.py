@@ -130,7 +130,7 @@ class AmongUs(LMObject):
         # This leads to crewmates not having accessibility to the worlds where they are imposter
 
         # Relationships for each agent
-        for i in range(self.num_agents):
+        for i in range(self.num_agents - 2):
             rels = []
             # 2 for loops for each possible world
             for x1 in range(self.num_agents):
@@ -148,7 +148,6 @@ class AmongUs(LMObject):
         self.relations.update(add_symmetric_edges(self.relations))
         self.relations.update(add_reflexive_edges(self.worlds, self.relations))
         self.kripke_structure = KripkeStructure(self.worlds, self.relations)
-
         self.real_world = f"Imp{self.num_agents - 2}_{self.num_agents -1}"
         self.has_received_update = True
 

@@ -102,7 +102,7 @@ if __name__ == "__main__":
     num_crew = 8
     num_imp = 2  # Currently cannot be varied. Keep at two
 
-    num_tasks = 5
+    num_tasks = 10
     num_visuals = 4
 
     headless = False
