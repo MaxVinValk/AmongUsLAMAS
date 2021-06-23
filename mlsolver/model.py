@@ -240,7 +240,7 @@ class AmongUsTwoImp(AmongUsKripke):
         # This leads to crewmates not having accessibility to the worlds where they are imposter
 
         # Relationships for each agent
-        for i in range(self.num_agents):
+        for i in range(self.num_agents - 2):
             rels = []
             # 2 for loops for each possible world
             for x1 in range(self.num_agents):
