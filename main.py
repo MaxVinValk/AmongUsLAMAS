@@ -100,7 +100,7 @@ def headless_run(controller, num_steps, file_name=None):
 if __name__ == "__main__":
 
     num_crew = 8
-    num_imp = 1  # Currently one and two are accepted values
+    num_imp = 2 # Currently one and two are accepted values
 
     num_tasks = 5
     num_visuals = 4
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         print("Visuals cannot be set higher than the number of tasks available")
         exit(1)
 
-    if not 0 < num_imp < 2:
+    if not 0 < num_imp <= 2:
         print("One or two impostors are supported.")
         exit(1)
 
