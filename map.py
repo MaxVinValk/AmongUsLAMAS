@@ -174,10 +174,4 @@ class SimpleSkeld(Map):
                  Task(7, "Fuel"), Task(7, "Trash", True),
                  Task(8, "Swipe")]
 
-        #TODO: remove?
-        # threshold = 0.5
-        # for task in tasks:
-        #     if random.random() > 0.5:
-            # task.is_visual = True
-
         super().__init__(room_nums, room_names, rooms_adjacent, room_start, room_meeting, tasks, num_agents)

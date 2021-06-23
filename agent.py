@@ -86,22 +86,8 @@ class Crewmate(Agent):
         self.goal = None
         self.goal_history = []
 
-        # TODO: look at this
-        self.other_is_imposter = {}
-
         self.trusted_agents = [False for _ in range(self.num_crew + num_imp)]
         self.trusted_agents[self.agent_id] = True
-
-    # TODO
-    def update_knowledge_before_discussion(self, km):
-        # \item Dead agents must be crewmates: A1 is dead $\rightarrow$ all A know that A1 a crewmate
-        pass
-
-    # TODO
-    def update_knowledge_after_discussion(self, km):
-        # \item Catching the imposter in a lie: (A1 is in the same room X1 as A2 at time Y $\land$ A2 announces
-        # they were at room X2 (IS NOT X1) at Y) $\rightarrow$ A1 knows A2 is the imposter
-        pass
 
     def act(self):
         """Try to complete the goal that is currently set, or else move"""
@@ -287,7 +273,7 @@ class Impostor(Agent):
             num_others = sum(current_room) - 1
 
             if num_others:
-                # TODO: Find a more elegant formula here?
+                # How likely it is to kill is proportional to the amount of other people present in the room
                 threshold = 1 - (num_others / len(current_room))
 
                 if random.random() < threshold:
