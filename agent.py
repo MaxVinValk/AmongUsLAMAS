@@ -210,7 +210,7 @@ class Crewmate(Agent):
                     self.km.update(self.agent_id, formula)
 
     def vote(self, agents):
-        """Crewmates vote for an agent if they're sure they are the imposter. 
+        """Crewmates vote for an agent if they're sure they are the imposter.
         Otherwise, they have a chance of either voting an agent that they still suspect,
         or passing."""
 
@@ -231,7 +231,7 @@ class Crewmate(Agent):
             # Randomly vote for an agent on the suspect-list
             vote = random.sample(suspects, 1)[0]
 
-            # If you are not yet sure, there is a probability that you vote pass. 
+            # If you are not yet sure, there is a probability that you vote pass.
             # This probability increases if you suspect more people (and are therefore less sure)
             threshold = (len(suspects) / (self.num_crew + self.num_imp)) * 0.5
             if random.random() < threshold:
@@ -256,7 +256,7 @@ class Crewmate(Agent):
         if self.goal is None:
             goal_line = "No current goal"
         else:
-            goal_line = f"Current goal: {self.goal[1]} in {self.game_map.room_names[self.goal[0]]}"
+            goal_line = f"Current goal: {self.goal.name} in {self.game_map.room_names[self.goal.room_id]}"
 
         return [
             f"Agent {self.agent_id} (Crewmate)",
@@ -357,7 +357,7 @@ class Impostor(Agent):
         self.target = min(number_of_suspects_per_agent, key = lambda t: t[1])[0]
 
     def vote(self, agents):
-        """The imposter votes the agents that are closest to finding them. 
+        """The imposter votes the agents that are closest to finding them.
         If there is no such agent, vote for a random living agent that is not an imposter."""
 
         # If the imposters have a set target, vote that
@@ -365,7 +365,7 @@ class Impostor(Agent):
             vote = self.target
         else: # Vote a random living agents
             vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
-        
+
         self.target = -1
         self.logger.log(f"Imposter {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
         return vote

@@ -69,9 +69,8 @@ class MapPane(Pane):
         size = self.bg_img.get_size()
         super().__init__(controller, screen, x, y, size[0], size[1], (255, 255, 255))
 
-        self.room_coords = [(444, 124), (312, 216), (120, 136), (28, 267), (234, 262), (124, 424), (336, 366),
-                            (474, 440), (624, 340), (258, 130), (524, 286), (130, 228), (266, 482)]
-        self.room_width = [5, 2, 2, 3, 2, 3, 3, 4, 3, 5, 2, 2, 4]
+        self.room_coords = room_coords
+        self.room_width = room_width
 
         self.sprites_to_draw = []
         self.draw_update()
@@ -121,7 +120,6 @@ class MapPane(Pane):
             for a in self.sprites_to_draw:
                 if a.x <= pos[0] < (a.x + a.w):
                     if a.y <= pos[1] < (a.y + a.h):
-                        print(f"You just clicked on agent: {a.agent_id}")
                         self.send(Message(self, "agent_clicked", {"agent_id": a.agent_id}))
                         clicked_agent = True
 

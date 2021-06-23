@@ -3,11 +3,11 @@
 Module contains a simple Kripke model for Among Us and 
 """
 
-from util.util import LMObject
 from mlsolver.kripke import KripkeStructure, World
 from mlsolver.formula import Atom, And, Not, Or, Box_a, Box_star
 from logger import Logger
 from graphviz import Digraph
+from abc import abstractmethod
 import pygame
 
 import os
@@ -96,7 +96,7 @@ def fixed_layout_graphviz(worlds, point, connectivity, r=2, label_pos=0.25):
     return dot
 
 
-class AmongUs(LMObject):
+class AmongUsKripke:
     def __init__(self, num_agents):
         self.num_agents = num_agents
         self.worlds = []
@@ -104,57 +104,20 @@ class AmongUs(LMObject):
         self.kripke_structure = None
         self.real_world = ""
 
-        self.setup()
         self.has_received_update = True
         self.buffered_img = None
 
+    @abstractmethod
     def setup(self):
-        self.worlds = []
-        self.relations = {}
+        pass
 
-        # Build the same number of worlds as there are agents. Each world has one imposter
-        for i in range(self.num_agents):
-            for k in range(i + 1, self.num_agents):
-
-                agent_is_imposter = {}
-                for j in range(self.num_agents):
-                    if i == j or k == j:
-                        agent_is_imposter[f"IsImp:{j}"] = True
-                    else:
-                        agent_is_imposter[f"IsImp:{j}"] = False
-
-                self.worlds.append(World(f"Imp{i}_{k}", agent_is_imposter))
-
-        # Build relations according to the following rules:
-        # Each agent knows whether they themselves are imposter or not
-        # This leads to crewmates not having accessibility to the worlds where they are imposter
-
-        # Relationships for each agent
-        for i in range(self.num_agents):
-            rels = []
-            # 2 for loops for each possible world
-            for x1 in range(self.num_agents):
-                for y1 in range(x1 + 1, self.num_agents):
-                    for x2 in range(self.num_agents):
-                        for y2 in range(x2 + 1, self.num_agents):
-                            if x1 == x2 and y1 == y2:
-                                continue
-
-                            if i != x1 and i != y1 and i != x2 and i != y2:
-                                rels.append((f"Imp{x1}_{y1}", f"Imp{x2}_{y2}"))
-
-            self.relations[f"{i}"] = set(rels)
-
-        self.relations.update(add_symmetric_edges(self.relations))
-        self.relations.update(add_reflexive_edges(self.worlds, self.relations))
-        self.kripke_structure = KripkeStructure(self.worlds, self.relations)
-
-        self.real_world = f"Imp{self.num_agents - 2}_{self.num_agents -1}"
-        self.has_received_update = True
+    @abstractmethod
+    def plot_fixed(self, size=15, label_pos=0.25, render=True):
+        pass
 
     def suspects(self, observer, other):
         """ Check if agent i suspects agent j of being the impostor
-        We do this by evaluating the sentence "i knows not "IsImp:j" 
+        We do this by evaluating the sentence "i knows not "IsImp:j"
         """
         sentence = Not(Box_a(str(observer), Not(Atom("IsImp:{}".format(other)))))
         return sentence.semantic(self.kripke_structure, self.real_world)
@@ -207,6 +170,59 @@ class AmongUs(LMObject):
 
         return Box_a(str(observer), conjunction)
 
+    def reset(self):
+        self.setup()
+
+
+class AmongUsTwoImp(AmongUsKripke):
+    def __init__(self, num_agents):
+        super().__init__(num_agents)
+        self.setup()
+
+    def setup(self):
+        self.worlds = []
+        self.relations = {}
+
+        # Build the same number of worlds as there are agents. Each world has one imposter
+        for i in range(self.num_agents):
+            for k in range(i + 1, self.num_agents):
+
+                agent_is_imposter = {}
+                for j in range(self.num_agents):
+                    if i == j or k == j:
+                        agent_is_imposter[f"IsImp:{j}"] = True
+                    else:
+                        agent_is_imposter[f"IsImp:{j}"] = False
+
+                self.worlds.append(World(f"Imp{i}_{k}", agent_is_imposter))
+
+        # Build relations according to the following rules:
+        # Each agent knows whether they themselves are imposter or not
+        # This leads to crewmates not having accessibility to the worlds where they are imposter
+
+        # Relationships for each agent
+        for i in range(self.num_agents):
+            rels = []
+            # 2 for loops for each possible world
+            for x1 in range(self.num_agents):
+                for y1 in range(x1 + 1, self.num_agents):
+                    for x2 in range(self.num_agents):
+                        for y2 in range(x2 + 1, self.num_agents):
+                            if x1 == x2 and y1 == y2:
+                                continue
+
+                            if i != x1 and i != y1 and i != x2 and i != y2:
+                                rels.append((f"Imp{x1}_{y1}", f"Imp{x2}_{y2}"))
+
+            self.relations[f"{i}"] = set(rels)
+
+        self.relations.update(add_symmetric_edges(self.relations))
+        self.relations.update(add_reflexive_edges(self.worlds, self.relations))
+        self.kripke_structure = KripkeStructure(self.worlds, self.relations)
+
+        self.real_world = f"Imp{self.num_agents - 2}_{self.num_agents - 1}"
+        self.has_received_update = True
+
     def plot_fixed(self, size=15, label_pos=0.25, render=True):
         """ Plot the kripke structure using the `fixed_layout_kripke` function
         """
@@ -233,7 +249,7 @@ class AmongUs(LMObject):
 
             edges = []
             for (start, end), labels in connectivity.items():
-               edges.append((world_id[start], world_id[end], ",".join(sorted(labels))))
+                edges.append((world_id[start], world_id[end], ",".join(sorted(labels))))
 
             dot = fixed_layout_graphviz(worlds, world_id[self.real_world], edges, r=size, label_pos=label_pos)
             if render:
@@ -246,39 +262,86 @@ class AmongUs(LMObject):
                 return dot
 
 
-    def reset(self):
+class AmongUsOneImp(AmongUsKripke):
+    def __init__(self, num_agents):
+        super().__init__(num_agents)
+
+        # Last index is always the impostor
+        self.imposter = num_agents - 1
+
         self.setup()
 
-    #TODO: Weghalen?
-    def receive(self, message):
-        pass
+    def setup(self):
+        self.worlds = []
+        self.relations = {}
 
+        # Build the same number of worlds as there are agents. Each world has one imposter
+        for i in range(self.num_agents):
+            agent_is_imposter = {}
+            for j in range(self.num_agents):
+                if i == j:
+                    agent_is_imposter["IsImp:{}".format(j)] = True
+                else:
+                    agent_is_imposter["IsImp:{}".format(j)] = False
 
-if __name__ == "__main__":
-    model = AmongUs(5)
-    import pygame
+            self.worlds.append(World("Imp{}".format(i), agent_is_imposter))
 
-    pygame.init()
-    display_width = 800
-    display_height = 600
-    gameDisplay = pygame.display.set_mode((display_width, display_height))
-    pygame.display.set_caption('Kripke')
-    black = (0, 0, 0)
-    white = (255, 255, 255)
-    clock = pygame.time.Clock()
-    kripke_img = model.plot_fixed()
+        # Build relations according to the following rules:
+        # Each agent knows whether they themselves are imposter or not
+        # This leads to crewmates not having accessibility to the worlds where they are imposter
+        for i in range(self.num_agents):
+            if i is not self.imposter:
+                self.relations[str(i)] = set(
+                    ("Imp{}".format(x), "Imp{}".format(y)) for x in range(self.num_agents) for y in
+                    range(self.num_agents) if
+                    ((i != x) and (i != y)))
 
+        self.relations.update(add_symmetric_edges(self.relations))
+        self.relations.update(add_reflexive_edges(self.worlds, self.relations))
+        self.kripke_structure = KripkeStructure(self.worlds, self.relations)
+        self.real_world = "Imp{}".format(self.imposter)
 
-    def show_kripke():
-        gameDisplay.blit(kripke_img, (0, 0))
+    def plot_fixed(self, size=2, label_pos=0.25, render=True):
+        """ Plot the kripke structure using the `fixed_layout_kripke` function
+          """
+        if not self.has_received_update:
+            return self.buffered_img
+        else:
+            self.has_received_update = False
 
+        worlds = []
+        world_id = {}
+        for i, w in enumerate(self.kripke_structure.worlds):
+            world_id[w.name] = i
+            worlds.append(w.name)
 
-    while True:
-        gameDisplay.fill(white)
-        show_kripke()
-        pygame.display.update()
-        clock.tick(60)
+        connectivity = {}
 
+        for agent, relations in self.kripke_structure.relations.items():
+            for (start, end) in relations:
+                (start, end) = (min(start, end), max(start, end))
+                if start == end:
+                    continue
+                if (start, end) in connectivity:
+                    connectivity[(start, end)].add(agent)
+                else:
+                    connectivity[(start, end)] = set([agent])
+
+        edges = []
+
+        for (start, end), labels in connectivity.items():
+            edges.append((world_id[start], world_id[end], ",".join(sorted(labels))))
+
+        dot = fixed_layout_graphviz(worlds, world_id[self.real_world], edges, r=size, label_pos=label_pos)
+
+        if render:
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                dot.render('kripke', format='png', directory=tmpdirname)
+                img = pygame.image.load(os.path.join(tmpdirname, 'kripke.png'))
+                self.buffered_img = img
+                return img
+        else:
+            return dot
 
 # class AmongUsOneImposter(LMObject):
 #     def __init__(self, num_agents, imposter):

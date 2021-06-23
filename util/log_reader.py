@@ -31,16 +31,12 @@ def find_log_around(log, sentence_to_find, num_context=3):
                 print(f"{j}| {log['logs'][j]}")
 
 
-def plot_variable(name_of_variable, log_file_paths=None):
-    if log_file_paths is None:
-        log_file_paths = []
-        for file in os.listdir("./"):
-            if file.endswith(".amongus"):
-                log_file_paths.append(file)
+def plot_variable(name_of_variable, log_file_paths):
 
     loaded_logs = []
-    for file_path in log_file_paths:
-        loaded_logs.append(load_log(file_path))
+
+    for file_path in os.listdir(log_file_paths):
+        loaded_logs.append(load_log(f"{log_file_paths}/{file_path}"))
 
     results = {}
     for log in loaded_logs:
