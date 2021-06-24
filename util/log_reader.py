@@ -61,6 +61,8 @@ def plot_variable(name_of_variable, log_file_paths):
     for file_path in os.listdir(log_file_paths):
         if file_path.endswith(".amongus"):
             loaded_logs.append(load_log(f"{log_file_paths}/{file_path}"))
+        else:
+            print(file_path)
 
     results = {}
     for log in loaded_logs:
