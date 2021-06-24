@@ -3,9 +3,22 @@ import numpy as np
 import pickle
 import os
 
+from statistics import stdev, mean
+
 def load_log(file_path):
     with open(file_path, "rb") as f:
         return pickle.load(f)
+
+
+def load_logs(log_folder):
+    loaded_logs = []
+
+    for file_path in os.listdir(log_folder):
+        if file_path.endswith(".amongus"):
+            loaded_logs.append(load_log(f"{log_folder}/{file_path}"))
+
+    return loaded_logs
+
 
 def get_wins(log):
     win_crew_vote = 0
@@ -31,12 +44,21 @@ def find_log_around(log, sentence_to_find, num_context=3):
                 print(f"{j}| {log['logs'][j]}")
 
 
-def find_trust(log):
+def get_avg_trusts(log):
 
-    trusts = set()
+    trusts = None
     i = 0
 
+    outcomes = []
+
     while i < len(log["logs"]):
+
+        if log["logs"][i].__contains__("Run:"):
+            if trusts is not None:
+                outcomes.append(len(trusts))
+
+            trusts = set()
+
         # We found a discussion phase
         if log["logs"][i].__contains__("Phase.DISCUSS"):
             i += 1
@@ -51,18 +73,11 @@ def find_trust(log):
         else:
             i += 1
 
-    return trusts
+    return mean(outcomes), stdev(outcomes)
 
 
-def plot_variable(name_of_variable, log_file_paths):
-
-    loaded_logs = []
-
-    for file_path in os.listdir(log_file_paths):
-        if file_path.endswith(".amongus"):
-            loaded_logs.append(load_log(f"{log_file_paths}/{file_path}"))
-        else:
-            print(file_path)
+def plot_variable_kills(name_of_variable, log_folder):
+    loaded_logs = load_logs(log_folder)
 
     results = {}
     for log in loaded_logs:
@@ -95,3 +110,31 @@ def plot_variable(name_of_variable, log_file_paths):
 
     plt.show()
 
+
+def plot_variable_trusts(name_of_variable, log_folder):
+    loaded_logs = load_logs(log_folder)
+
+    results = {}
+    for log in loaded_logs:
+        results[log["run_info"][name_of_variable]] = list(get_avg_trusts(log))
+
+    sorted_keys = sorted(results.keys())
+    outcomes = [results[k][0] for k in sorted_keys]
+    errs = [results[k][1] for k in sorted_keys]
+
+    y_pos = np.arange(len(sorted_keys))
+    plt.rcdefaults()
+    fig, ax = plt.subplots()
+
+    h = 1
+
+    ax.barh(y_pos, outcomes, height= h/5, xerr=errs)
+
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(sorted_keys)
+    ax.invert_yaxis()
+
+    ax.set_xlabel("Average trust relations per run")
+    ax.set_title(f"Total trust relations for varying {name_of_variable}")
+
+    plt.show()
