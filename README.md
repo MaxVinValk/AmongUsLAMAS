@@ -34,6 +34,11 @@ When launching the simulation without command line arguments, default parameters
 - --cooldown INT: How many ACT steps must pass before the impostor can kill (again)
 - --stat_thres FLOAT: A threshold which determines how likely it is for an impostor to remain in a room instead of moving to an adjacent room. A value of 0.2 represents a 20\% chance of remaining in the same room.
 
+## Example
+```bash
+python3 main.py --headless --num_steps 10000 --num_crew 8 --num_imp 2 --num_tasks 10 --visuals 5 --num_imp 2 --stat_thres 0.25
+```
+
 # Program and file structure
 The simulation is launched from main.py, which creates an instance of the controller class. This class controls the simulation flow. This controller is given the map and information on the agents. If the simulation is running in visual mode, several panes are created for displaying game information.
 
