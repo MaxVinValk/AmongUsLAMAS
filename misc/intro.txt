@@ -1,0 +1,16 @@
+Among us is a hidden information game which is set in various sci-fi locations. The players are divided up into two different groups, crewmates and impostors, which are visually indistinguishable. 
+The goal of the impostors is to kill every crewmate, and the goal of the crewmate is to either complete a series of tasks in their environment, or to figure out who the impostors are. The latter is done by a discussion and voting round in which all players that are alive can share information. If during the voting round sufficient players vote for one specific player, they will be removed from the game.
+
+Information can be obtained in various ways. It is known to impostors who the other impostors are. Crewmates can obtain this information by witnessing certain acts that only impostors 
+can perform, such as killing or making use of a special navigation system only accessible to them. Furthermore, crewmates can witness fellow cremates performing certain actions
+which confirm their innocence. These actions are special tasks that have a special animation which is visible to all players near the acting crewmate. Lastly, impostors have access
+to a special series of actions called sabotage. These actions do not have animations or any other indicators towards who performed them, so they can be performed without revealing who
+the impostors are, and help them in isolating crewmates.
+
+The results of this project consist of two parts. First, a simulation was built of a simplified version of the game. In this version, impostors do not have access to a special navigation
+system or sabotage, and do not interfere with the discussion phase. For the corresponding Kripke model, the information that is encoded within is which agent suspects which other agents
+of potentially being an impostor. Second, a formal model was set up, including a proof-of-concept program, exploring the possibilities of modelling
+information regarding to location and the use of special navigation systems.
+
+This report is structured as follows: First, we will discuss the formalization of the kripke model for the simulation. Second, we will discuss the findings from running the simulation with
+varying parameter settings. Finally, we will discuss the location model and its results.
