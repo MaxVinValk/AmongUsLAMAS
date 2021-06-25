@@ -4,31 +4,31 @@
     <script type="text/javascript"
     src="https://www.maths.nottingham.ac.uk/plp/pmadw/LaTeXMathML.js">
     </script>
-    
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-    
+
     body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
     }
-    
+
     figure {
     border: 1px #cccccc solid;
     padding: 4px;
     margin: auto;
     text-align: center;
     }
-    
+
     .row {
     display: flex;
     }
-    
+
     .column {
     flex: 50%;
     padding: 5px;
     }
-    
+
     figcaption {
     background-color: black;
     color: white;
@@ -36,19 +36,19 @@
     padding: 2px;
     text-align: center;
     }
-    
+
     .top-container {
     padding: 100px;
     background-image:url('site_images/AmongUs.jpeg');
     background-repeat: no-repeat;
-    background-position: center; 
+    background-position: center;
     background-size: 100%;
     position: relative;
     object-fit: cover;
     width: auto;
     height: 150px;
     }
-    
+
     .transbox {
     padding: 1px;
     opacity: 0.8;
@@ -57,12 +57,12 @@
     color: #ffffff;
     background-color: black;
     }
-    
+
     .topnav {
     overflow: hidden;
     background-color: #333;
     }
-    
+
     .topnav a {
     float: left;
     color: #f2f2f2;
@@ -71,27 +71,27 @@
     text-decoration: none;
     font-size: 17px;
     }
-    
+
     .topnav a:hover {
     background-color: #ddd;
     color: black;
     }
-    
+
     .topnav a.active {
     background-color: #04AA6D;
     color: white;
     }
-    
+
     .content {
     padding: 16px;
     }
-    
+
     .sticky {
     position: fixed;
     top: 0;
     width: 100%;
     }
-    
+
     .sticky + .content {
     padding-top: 102px;
     }
@@ -105,7 +105,7 @@
 <p>Group 19: Logical Aspects of Multi-Agent Systems.</p>
 </div>
 </div>
-              
+
 <div class="topnav" id="myHeader">
         <a href="#what_is_among_us">Introduction</a>
         <a href="#kripke_model">Model</a>
@@ -115,60 +115,60 @@
         <a href="#extended-knowledge-model-movement-between-rooms">Extensions</a>
         <a href="https://github.com/MaxVinValk/AmongUsLAMAS">GitHub</a>
 </div>
-      
+
 <div class="content">
   <a id="what_is_among_us"></a>
   <h2>What is Among Us?</h2>
-    <p>Among us is a hidden information game which is set in various sci-fi locations. The players are divided up into two different groups, crewmates and impostors, which are visually indistinguishable. The goal of the impostors is to kill every crewmate, and the goal of the crewmate is to either complete a series of tasks in their environment, or to figure out who the impostors are. The latter is done by a discussion and voting round in which all players that are alive can share information. If during the voting round sufficient players vote for one specific player, they will be removed from the game.</p> 
-    <p>Information can be obtained in various ways. It is known to impostors who the other impostors are. Crewmates can obtain this information by witnessing certain acts that only impostors can perform, such as killing or making use of a special navigation system only accessible to them. Furthermore, crewmates can witness fellow cremates performing certain actions which confirm their innocence. These actions are special tasks that have a special animation which is visible to all players near the acting crewmate. Lastly, impostors have access to a special series of actions called sabotage. These actions do not have animations or any other indicators towards who performed them, so they can be performed without revealing who the impostors are, and help them in isolating crewmates.</p>
+    <p>Among us is a hidden information game which is set in various sci-fi locations. The players are divided up into two different groups, crewmates and impostors, which are visually indistinguishable. The goal of the impostors is to kill every crewmate, and the goal of the crewmates is to either complete a series of tasks in their environment, or to figure out who the impostors are. The latter is done by a discussion and voting round in which all players that are alive can share information. If during the voting round sufficient players vote for one specific player, they will be removed from the game.</p>
+    <p>Information can be obtained in various ways. It is known to impostors who the other impostors are. Crewmates can obtain this information by witnessing certain acts that only impostors can perform, such as killing or making use of a special navigation system only accessible to them. Furthermore, crewmates can witness fellow cremates performing certain actions which confirm their innocence. These actions are special tasks that have a special animation which is visible to all players near the acting crewmate. Lastly, impostors have access to a special series of actions called sabotages. These actions do not have animations or any other indicators towards who performed them, so they can be performed without revealing who the impostors are, and help them in isolating crewmates.</p>
     <p>The results of this project consist of two parts. First, a simulation was built of a simplified version of the game. In this version, impostors do not have access to a special navigation system or sabotage, and do not interfere with the discussion phase. For the corresponding Kripke model, the information that is encoded within is which agent suspects which other agents of potentially being an impostor. Second, a formal model was set up, including a proof-of-concept program, exploring the possibilities of modelling information regarding to location and the use of special navigation systems.</p>
     <p>This report is structured as follows: First, we will discuss the formalization of the kripke model for the simulation. Second, we discuss how agents can interact with this kripke model. Third, we will discuss the findings from running the simulation with varying parameter settings. Finally, we will discuss the location model and its results.</p>
-    
+
     <h3>Formalizing Among Us</h3>
     <p>Fig.1 showcases in broad terms how our implementation of Among Us is structured. Below, the phases are explained in more detail.</p>
     <figure>
       <img src="site_images/logic/program_flow.png" alt="A flowchart of how our Among Us is implemented." style="max-width: 100%; height: auto; width: 800px">
       <figcaption>Fig.1 - A flowchart of how Among Us is implemented.</figcaption>
     </figure>
-    
+
     <h4>Action Phase</h4>
-    <p>The action phase consists out of two phases itself: acting and observing. In the first phase, all agents can either move to an adjacent room or perform an action, which is a task if they are crewmate, or kill if they are impostor. They can also choose to neither move nor perform an action. After all actions are completed, the agents observe what actions have taken place in the room that they are in. The agents follow a hard-coded strategy to path search and finish their tasks in our implementation. This action phase is repeated until a crewmate observes a dead body, in which case the agent can report the body. This immediately triggers the discussion phase.</p>
+    <p>The action phase consists out of two sub-phases: acting and observing. In the former, all agents can either move to an adjacent room or perform an action, which is a task if they are a crewmate, or kill if they are an impostor. They can also choose to neither move nor perform an action. After all actions are completed, the agents observe what actions have taken place in the room that they are in, and witness those that are marked as observable events, such as visual tasks, murder or the presence of a corpse. The agents follow a hard-coded strategy to complete their own tasks by selecting one that they have not completed, moving to the correct room, and performing said task. Impostors, on the other hand, move about in a random fashion if they do not kill. This action phase is repeated until a crewmate observes a dead body, in which case the agent can report the body. This immediately triggers the discussion phase.</p>
     <p>To model the real game, the impostor will have a cooldown of a set number of rounds on their kill-action. When it is capable of killing a crewmate, this action is stochastic. This means that simply being in the same room as another agent without getting killed does not mean that they are a crewmate. The probability of the impostor killing a crewmate depends on how many other crewmates are in the room. If, for example, there are many other crewmates in the same room as the impostor, the chances of the impostor killing anyone are lower than when the impostor is in a room with only one crewmate. </p>
-        
+
     <h4>Discussion Phase</h4>
     <p>The discussion phase starts with an announcement of which agent has died. Afterwards, each crewmate announces their entire knowledge set about who which agents are an impostor, a crewmate, or could still be both. At the start of the game, when crewmates still have not gained any knowledge, the knowledge of crewmate 1 is modelled like <span class="math inline">K_1 ((Imp_2 \lor \neg Imp_2) \land (Imp_3 \lor \neg Imp_3) \land ... \land (Imp_n \lor \neg Imp_n))</span>. Here, both possibilities are still open for each agent and the role of the crewmate making the announcement is not included.</p>
     <p>Then, when an agent knows that for example <span class="math inline">a_2</span> is an impostor and <span class="math inline">a_3</span> is a crewmate, the knowledge gets updated to <span class="math inline">K_1 ((Imp_2) \land (\neg Imp_3) \land ... \land (Imp_n \lor \neg Imp_n))</span>.</p>
     <p>Impostors do not announce anything at this stage. Since crewmates only incorporate the knowledge of other agents that they are sure of are also crewmates, the announcements of the impostors would always be ignored and are therefore not of any added value. </p>
-    
+
     <h4>Voting Phase</h4>
     <p>The crewmates and the impostors have different voting behaviour. Before voting, the crewmates check in the kripke model which worlds they still consider to be possible and therefore also which agents they still suspect. They also check if they are already sure whether an agent is the impostor. If this latter is the case, then they will vote for this agent which they know is the impostor. Otherwise, they randomly vote for an agent which is still on their suspect-list, or they pass. When the list of suspects becomes smaller, so does the chance of crewmates passing. This allows crewmates to be more confident in their guess if there are fewer impostor possibilities. The threshold under which an agent passes is determined by the number of suspects divided by half of the initial agents.</p>
     <p>The impostors use higher-order knowledge in their voting strategy. Before voting, they determine which crewmate they should vote off by counting the number of suspects these crewmates still have. This number is indirectly announced in the announcement phase, and from this information impostors know what crewmates know. In order to eliminate the highest threats, the impostors vote for the agent that suspects the least number of agents and is therefore closest to finding the impostors. The impostors never vote for fellow impostors.</p>
     <p>After all votes have been cast, the action with most votes is executed. This means that either an agent is voted off the ship, or the voting round is passed. In case a tie occurs between multiple actions, the voting round also passes. There does not need to be a majority (e.g. more than half of the votes) for an action to be executed.</p>
-    
-    <h4>Ending conditions</h4>          
+
+    <h4>Ending conditions</h4>
     <p>The game can end in three possible ways:</p>
     <ul>
     <li><p>All impostors are voted out, meaning that the crewmates win.</p></li>
     <li><p>All crewmates completed all of their assigned tasks, meaning that the crewmates win.</p></li>
-    <li><p>An equal number of crewmates and impostors are alive, meaning that the impostors win. In such a situation, the crewmates are not capable of voting of the impostors anymore, assuming that the impostors do not vote for other impostors.</p></li>
+    <li><p>An equal or lesser number of crewmates than impostors are alive, meaning that the impostors win. In such a situation, the crewmates are not capable of voting off the impostors anymore, assuming that the impostors do not vote for other impostors.</p></li>
     </ul>
-      
+
   <a id="kripke_model"></a>
   <h2>Kripke Model</h2>
-    <p> Our implementation of Among Us can run for either one or two impostor(s). The size of the kripke model is also dependent on that. For one impostor, the model has the same number of worlds as there are agents, where each world represents a state where one agent is the impostor. Each world is connected to each world, meaning there are <span class="math inline">10*10 =100</span> relations. </p>
+    <p> Our implementation of Among Us supports simulations with either one or two impostor(s). The size of the kripke model The size of the model depends on this, as each world represents which single agent is, or pair of agents are, the impostor(s). For one impostor, the model has the same number of worlds as there are agents, where each world represents a state where one agent is the impostor. Each world is connected to each world, meaning there are <span class="math inline">10*10 =100</span> relations. </p>
     <p>For two impostors, the size of the model is the number of agents times the number of agents minus one, divided by two. In the case of ten agents, this means that there are <span class="math inline">(10*9)/2=45</span> possible worlds. This way, all possible combinations of agents have a single world. This means that <span class="math inline">w_1_2</span> does exist but <span class="math inline">w_2_1</span> does not. As for the relations, for each agent, each world in which that agent is not involved (45-9=36) is connected to all other worlds minus itself (35). Additionally, each world has a reflexive relation to itself. There are therefore <span class="math inline">(36*35)+45=1305</span> relations per agents, so <span class="math inline">10*1305=13050</span> relations in total. At the start of the game, the Kripke Model for ten agents and two impostors can be seen in Fig.2.</p>
     <figure>
       <img src="site_images/KMFULL.png" alt="Kripke Model at the start of a game" style="max-width: 100%; height: auto; width: 800px">
       <figcaption>Fig.2 - The full kripke model at the start of a ten agent game with two impostors.</figcaption>
     </figure>
-  
+
     <p>In the visualization of the world, the reflexive arrows have been left out and the straight lines represent bidirectional arrows. Additionally, the impostor relations have also been left out of the in-game simulation. This is because the impostors do not update these relations, nor are they used by any other agents. This allows for a neater visualisation, as otherwise all relations would still be visible by at the end of the game. At the end of an example run, the Kripke Model then looks like Fig.3.</p>
-    
+
     <figure>
       <img src="site_images/KMEnd.png" alt="Kripke Model after a run" style="max-width: 100%; height: auto; width: 800px">
       <figcaption>Fig.3 - The full kripke model after a random ten agent game with two impostors.</figcaption>
     </figure>
-  
+
   <a id="knowledge_types"></a>
   <h2>Knowledge Types</h2>
     <p>There are four basic types of knowledge that can be learned. Here, a<sub>1</sub> and a<sub>2</sub> $\in$ set of agents A, x<sub>1</sub> and x<sub>2</sub>$\in$ set of rooms X and y $\in$ set of timesteps Y:</p>
@@ -179,7 +179,7 @@
       <li>Whether an agent is an impostor or a crewmate. For example, a<sub>1</sub> is an impostor.</li>
       </ul>
     <p>For the first two in these types of knowledge to be gained, it is important that a crewmate a<sub>1</sub> is in the same room as agent a<sub>2</sub> (where a<sub>1</sub> <span>&#8800;</span> a<sub>2</sub>) at the same time. The last knowledge type about whether an agent is an impostor or not can be derived from the first three knowledge types as described in the next sections.</p>
-    
+
   <a id="reasoning_rules"></a>
   <h2>Reasoning Rules</h2>
   <p>There are several rules a crewmate (here a<sub>1</sub>, a<sub>2</sub> and a<sub>3</sub>) can use to deduct this last type of knowledge about who the impostors (here a<sub>4</sub>) are. They are listed as follows:</p>
@@ -189,7 +189,7 @@
       <li>Dead agents must be crewmates: a<sub>1</sub> is dead $\rightarrow$ C $\neg$Imp<sub>1</sub></li>
       <li>Trust friendly announcement: (K<sub>1</sub> $\neg$Imp<sub>2</sub> $\land$ a<sub>2</sub> announces K<sub>2</sub>($\neg$Imp<sub>3</sub> $\land$ </sub>Imp<sub>4</sub>)) $\rightarrow$ K<sub>1</sub>($\neg$Imp<sub>3</sub> $\land$ </sub>Imp<sub>4</sub>). Because of higher order knowledge, a<sub>1</sub> now also knows that a<sub>3</sub> is a crewmate and a<sub>4</sub> is an impostor.</li>
   </ul>
-    
+
   <a id="findings"></a>
   <h2>Findings</h2>
     <p>In order to test several functionalities and interactions of our implementation, we ran several simulations. The standard settings with which we ran the simulations are: </p>
@@ -204,28 +204,28 @@
     <p>Each simulation was run with 10000 iterations and the standard settings were used, except for the variable that was experimented with.</p>
     <p>The first changeable variable is the number of impostors (see Fig.4). Our implementation supports having either one or two impostors. Here, as expected, the crewmates are very likely to win in a game with only one impostor. In most cases, the crewmates figure out who the impostor is and vote them out. In some cases, the crewmates win by completing their tasks. This means that the impostor was not fully discovered, but could also not kill enough crewmates in time. In about 3% of all cases, the single impostor still manages to kill enough crewmates in order to win.</p>
     <p>The game with two impostors, which is run according to all the standard settings, is more balanced. Here, the impostor/crewmate winrate is close to 50/50. This property, in combination with standard settings from the real game Among Us, is why these base settings were set this way. Where crewmates win, they usually do so because they discovered who the impostors were and could therefore vote them out. In about 13% of all runs, the impostors could not kill fast enough, but were also not discovered in time. This results in a win for the crewmates because they managed to finish all their tasks and save the ship.</p>
-    
+
     <figure>
       <img src="site_images/plots/varying_imps.png" alt="Results with a varying number of impostors" style="max-width: 100%; height: auto; width: 800px">
       <figcaption>Fig.4 - The winrate of impostors and crewmates depending on the number of impostors.</figcaption>
     </figure>
 
     <p>When varying the number of crewmates (see Fig.5), the winrate shifts a lot. With three crewmates and two impostors, it is near impossible for the crewmates to win. This is because if only one of them is killed, they already lose. When increasing the number of crewmates on the other hand, it becomes apparant that the impostors have a hard time winning. Another visible change is that the crewmates are more likely to win by voting out the impostors than by completing all their tasks. This is due to the fact that (1) impostors have to kill more people and therefore have a higher chance of being caught, (2) it takes longer for all the impostors to kill all crewmates, giving the crewmates more time to communicate, and (3) crewmates have more possible agents that they can trust and communicate with. Therefore, their combined knowledge is greater and the impostors can more easily be identified.</p>
-    
+
     <figure>
       <img src="site_images/plots/varying_crews.png" alt="Results with a varying number of crewmates" style="max-width: 100%; height: auto; width: 800px";">
       <figcaption>Fig.5 - The winrate of impostors and crewmates depending on the number of crewmates.</figcaption>
     </figure>
 
     <p>Varying the number of tasks (see Fig.6) also behaves as can be expected. With a lower number of tasks (e.g. four), the crewmates mainly win by completing their tasks, as the impostors do not have enough time to kill and the crewmates do not have enough time to gain and share their knowledge. With an increasing number of tasks however, the chances of crewmates winning by finishing their tasks becomes smaller and smaller. With 16 tasks, this becomes near impossible. The increasing number of tasks also increases the chances of impostors winning, as they have more time to kill, but it also increases the chances of crewmates winning by voting off the impostors. With more tasks, the number of visual tasks also scales. This allows the crewmates to clear eachother more often, and they can therefore share their knowledge more often. Additionally, they have extra time to gather and share this information.</p>
-    
+
     <figure>
       <img src="site_images/plots/varying_tasks.png" alt="Results with a varying number of tasks" style="max-width: 100%; height: auto; width: 800px">
       <figcaption>Fig.6 - The winrate of impostors and crewmates depending on the number of tasks.</figcaption>
     </figure>
 
     <p>The number of visuals greatly impacts the trust relations between agents, as can be seen on the left of Fig.7. With no visual tasks, the crewmates can never establish full trust in another agent. Therefore, they cannot know that what other agents communicate is true, making them vulnerable to losing from the impostors, as can be seen in the figure on the right of Fig.7. With an increasing number of visual tasks, where five visual tasks means that half of the tasks are visual and ten visual tasks means that all tasks are visual, the winratio for the crewmates quickly increase, as their chances of trusting and communicating with other crewmates also increase. This is visible by the decline in impostor wins and the decreasing part the wins by tasks play in their total number of wins.</p>
-    
+
     <figure>
     <div class="row">
       <div class="column">
@@ -247,7 +247,7 @@
 <!-- TODO: Jeroen add section -->
   <a id="extended-knowledge-model-movement-between-rooms"></a>
   <h2>Extended Knowledge Model: Movement between Rooms</h2>
-  
+
     <p>In the basic knowledge model, when a crewmate learns someone was in a room he will take this into consideration, but will not use the movement rules to infer where that person could be in the previous or next step. This information is often relevant, for example when <span class="math inline">a_1</span> sees <span class="math inline">a_2</span> at the left of the map, and in the next time step <span class="math inline">a_3</span> is killed at the right end of the map, this means <span class="math inline">a_1</span> can infer that <span class="math inline">a_2</span> cannot be the killer because he cannot have traveled across the map that quickly. We have thought about ways to extend our approach to make this kind of inference possible, which we might implement and compare if we have the time.</p>
     <p>It is not feasible to construct a single Kripke model encoding the location of all agents at all time steps due to the curse of dimensionality. An alternative is to construct a set of disconnected models representing knowledge about subsets of the propositions about the game world. A reasonable simplification might be to construct one Kripke model for every combination of time step and agent (so for example in a game with 5 agents where 10 time steps have passed, there would be 50 such models). The location model for agent <span class="math inline">a_i</span> at time <span class="math inline">t</span> will be denoted <span class="math inline">M^\mathsf{loc}_{a_i,t}</span> and has the following propositional atoms:</p>
     <p><span class="math display">P^\mathsf{loc}_{a_i,t} = \{\mathsf{room}_{a_i;r;t} | r \in R\} \cup \{ \mathsf{imp}_a | a \in A\},</span> where <span class="math inline">\mathsf{room}_{a_i;r;t}</span> indicates <em><span class="math inline">a_i</span> was in room <span class="math inline">r</span> at time <span class="math inline">t</span></em> and <span class="math inline">\mathsf{imp}_a</span> indicates <em>agent <span class="math inline">a</span> is the impostor</em>.</p>
@@ -266,17 +266,17 @@
       extensions: ["jsMath2jax.js"]
     });
   </script>
-  
+
   <script
     src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML">
   </script>
-  
+
   <script>
       window.onscroll = function() {myFunction()};
-      
+
       var header = document.getElementById("myHeader");
       var sticky = header.offsetTop;
-      
+
       function myFunction() {
         if (window.pageYOffset > sticky) {
           header.classList.add("sticky");
@@ -284,23 +284,23 @@
           header.classList.remove("sticky");
         }
       }
-  
+
   // The function actually applying the offset
   function offsetAnchor() {
       if(location.hash.length !== 0) {
           window.scrollTo(window.scrollX, window.scrollY);
       }
   }
-  
+
   // This will capture hash changes while on the page
   window.addEventListener("hashchange", offsetAnchor);
-  
+
   // This is here so that when you enter the page with a hash,
   // it can provide the offset in that case too. Having a timeout
   // seems necessary to allow the browser to jump to the anchor first.
   window.setTimeout(offsetAnchor, 1); // The delay of 1 is arbitrary and may not always work right (although it did in my testing).
-  
-  
+
+
   </script>
 
 </body>
