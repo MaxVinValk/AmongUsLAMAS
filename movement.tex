@@ -1,0 +1,127 @@
+\documentclass[a4paper]{scrartcl}
+%\usepackage[a4paper, total={7in, 9in}]{geometry}
+\usepackage[left=2cm, right=2cm, top=2cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amssymb,amsmath}
+\usepackage[makeroom]{cancel}
+\usepackage{hyperref}
+\usepackage{biblatex} 
+\addbibresource{references.bib} 
+
+\title{Among Us: Modelling movement in Among Us with epistemic logic}
+\author{Group 19:\\
+\emph{Barbera de Mol (s3374610})\\
+\emph{Jeroen Muller (s2590182)} \\
+\emph{Max Valk (s3246922)}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Background}
+One kind of reasoning about the game Among Us involves the way players move from room to room. For example, consider a scenario where player $c$ learns that $b$ was killed in a specific room and tries to figure out who could have been the killer. He might for example think as follows: \emph{``I was close to player $a$ while $b$ was killed at the other side of the map. This means $a$ cannot be the killer.''} A good player does not just consider the information that he observed directly, but also what can be extrapolated from it by considering the rules of the game. For example, $a$ might have been out of sight of $c$ for a short time, but $c$ can use his knowledge of the map to deduce that there was insufficient time for $a$ to move all the way to the place where $b$ was killed. In this case $c$ should still remove $a$ from his list of suspects.
+
+We can capture this kind of reasoning by constructing a Kripke model that describes what agents know about where everyone is at any time. To keep things simple we will study a highly simplified version of the game in which we only consider the way agents move from room to room. Movement and observations will be described by using Dynamic Epistemic Logic action models \cite{Ditmarsch2007DynamicEL} with postconditions\cite{postconditions}. This approach could in principle be extended to a more complex model, where we also consider  things like other types of actions and agent roles, although in that case the number of states would probably become very large even when considering modest numbers of agents and rooms. In what follows we will first describe the Kripke model and the action models used to update it. We will then describe how the model was implemented in Python, describe two optimizations that are used in the implementation, and show its application to a simple example. Our source code is available on Github and can also be executed interactively using a web-based notebook on Binder without the need to install any software. 
+
+
+
+\section*{Kripke model}
+Let $\mathcal{A}$ denote the set of agents and $\mathcal{R}$ the set of rooms. At any time, each agent is in one of a fixed set of rooms. We describe the location of agents with the set of atomic propositions $P_{\mathcal{M},\mathcal{R}} = \{a_r | a \in \mathcal{A}, r \in \mathcal{R}\}$, where $a_r$ denotes that $a$ is in room $r$. The way agents can move from room to room is described by the relation $\rightsquigarrow$ on the rooms, such that $r_1 \rightsquigarrow r_2$ if room $r_2$ can be reached from room $r_1$ in one movement step. Since we will always allow agents to move in both directions between rooms and to remain in the same room, the relation $\rightsquigarrow$ will be reflexive and symmetric.
+
+When $|\mathcal{A}| = m$, at any given time the knowledge in our model is described by a $\mathcal{S}5_{\mathsf{(m)}}$-world $(\mathbb{M}, s)$, where $\mathbb{M} = \left<S, \pi, R_1, \dots, R_m \right>$ is a Kripke structure and the distinguished state $s \in S$ describes the real world. The valuation function $\pi: S \rightarrow (P_{\mathcal{M},\mathcal{R}} \rightarrow \{\mathbf{t},\mathbf{f}\})$ assigns a truth value to all atomic propositions in each state. Because agents are always in exactly one room, the valuation function must satisfy the following constraint for every $a \in \mathcal{A}$ in order to describe a consistent state of the game:
+
+$$[\pi(s)(a_i) = \mathbf{t}] \quad \mathrm{iff} \quad [\pi(s)(a_j) = \mathbf{f}] (j \neq i)$$
+
+\section*{Action models}
+The Kripke model is updated by executing an action model with preconditions and postconditions. An action model describes a set of possible actions, of which one will be executed. The definitions we use are similar to those given in \cite{postconditions}, but the preconditions are restricted to being conjunctions of possibly negated atomic propositions, which is sufficient for our prupose. Briefly, an action model with postconditions is very similar to a Kripke structure and has the following structure: $\mathsf{M} = \left<\mathsf{S}, \mathsf{pre}, \mathsf{pos}, R_1, \dots, R_m\right>$. Here $\mathsf{S}$ is the set of actions that are possible in the action model.  $\mathsf{pre} : \mathsf{S} \rightarrow \mathcal{L}$ assigns a precondition sentence to each action (something like $p_1 \land p_2 \land \neg p_3$), and $\mathsf{post} : \mathsf{S} \rightarrow (\{p_1, \dots\ p_j \}, \{\neg q_1, \dots, \neg q_k\})$ assigns to each state a set of propositions that will become \emph{true} after the corresponding action is executed and a set of propositions that will become \emph{false}. The relations $R_m$ relate states that are indistinguishable for agent $m$.
+
+The result of executing an action $(\mathsf{M}, \mathsf{j})$ in action model $(\mathbb{M}, s)$ is the Kripke world ($\mathbb{M} \otimes \mathsf{M}, (s, \mathsf{j}))$. We will not repeat the definition of the operation, but the states $(s, \mathsf{j})$ of $\mathbb{M} \otimes \mathsf{M}$ are those states in the Caresian product $S \times \mathsf{S}$ where $(mathbb{M}, s) \vDash pre(\mathsf{j})$, with the substitutions in the postcondition carried out. Two states in the product model are related for agend $a$ if the corresponding states and actions are related for that agent in \emph{both} the Kripke model and the action model (thus agents can distinguish resulting states when they can distinguish either the previous state or the action). 
+
+In our simplified version of Among Us, every turn consists of all agents simulataneously taking a movement step, followed by them simultaneously observing the state of the new room they are in. We can neatly define this set of operations as the execution of a set of action models. We will define a movement action model $\mathsf{MOV}_a$ describing agent $a$ taking one step, and an action model $\mathsf{OBS}$ for the effect of all observations. The relation between the Kripke models of two consecutive time steps is then as follows:
+
+$$(\mathbb{M}_{t+1}, s_{t+1}) = (\mathbb{M}_{t}, s_{t}) \otimes (\mathsf{MOV}_{a}, \mathsf{mov}_{a,t}) \otimes \dots \otimes (\mathsf{MOV}_{m}, \mathsf{mov}_{m,t}) \otimes (\mathsf{OBS}, \mathsf{obs}_{t}) $$
+
+
+\subsection*{Single agent movement}
+The single agent movement action model $\mathsf{MOV_a}$ contains one state for every connected pair of rooms $(r, s) \in \rightsquigarrow$. It has precondition $\mathsf{pre}(r,s) = a_r$, and postcondition $\mathsf{post}(r,s) (\{a_s\}, \{\neg a_r\})$ (so the only change is the position of agent $a$). All states are distinguishable for $a$ and indistinguishable for all other agents, so $R_x$ includes only the reflexive relations if $x=a$ and is the full relation on the states of $\mathsf{MOV_a}$ for all other agents. 
+
+\subsection*{Observation}
+The observation action model contains one action for every possible distribution of agents over rooms, so the total number of states is $|\mathcal{R}| ^ {|\mathcal{A}|}$. For the state for a distribution $(a_i, b_j, \dots)$, the precondition will be the conjunction $a_i \land b_j \land \dots$, so each action picks out states in the Kripke model that match that distribution of agents. Two states in the observation action model are equivalent for agent $a$ if the set of agents in the room where $a$ is is the same. The postconditions of the observation action model is empty. Thus, applying this action model leaves the size of the Kripke model unchanged but removes relations where agents can distinguish the corresponding states based on what they can see in the room they are in. 
+
+\section*{Implementation}
+The Kripke models and action models were implemented from scratch in Python using the \texttt{NetworkX} graph manipulation library\cite{NetworkX}.  As we only consider fairly simple sentences here, all logical sentences are evaluated using the built-in set operations of Python. To be able to handle more complex sentences (like higher-order knowledge) the Kripke models could be translated into \texttt{mlsolver} models like the other part of our project, but for the sake of simplicity we did not pursue this. 
+
+\subsection*{Optimization 1: Removing irrelevant states}
+Because we only evaluate sentences that contain a single $K_a$-operator in the distinguished state $s$ and this operator only depends on the states that are reachable from $s$ in one step, the ourcomes we report do not depend on the states in the Kripke-model that are not related to $s$ for any agent. We can use this fact by removing all states that are not neighbours of $s$ after every application of an action model. It is easy to see that this simplification is safe as long as the preconditions and postconditions in the action model don't use the $K$-operator (which is currently not possible in our simulation). This optimization can be enabled or disabled in the simulation, and was used during the generation of the results below.
+\subsection*{Optimization 2: Replacing nodes with their bisimulation class}
+After the execution of a sequence of action models, one state will be created for each sequence of actions that is allowed by the preconditions. This means the number of states tends to grow as the simulation proceeds. Many of these states can be removed by the first optimization, but an orthagonal problem is the creation of states that are equivalent for the evaluation of all sentences. This type of equivalence is called a bisimulation, and we can deal with it by replacing all states in the Kripke-model with their bisimulation class. A full explanation is given in \cite{Bisimulations}, in addition to an algorithm that can be used to perform the optimization. We implemented this algorithm and saw a simplification of the Kripke model in many cases. For example, when the simulation is started with two agent in the same room that are then moved apart and back together, both agents know the full state of the game, but the Kripke model will consist of a number of indistinguishable states referring to each other. The application of the bisimulation algorithm correctly reduces these to a single state. In our example below, this step was performed after the removal of irrelevant sates every time an action model was executed. In the implementation of the bisimulation algorithm an existing recipe for partitioning sets into equivalence classes based on a binary predicate was used \cite{partition} together with the graph algorithms built into \texttt{NetworX}.
+
+\section*{Example}
+For the example, we consider a game where two agents $a$ and $b$ are moving around in a map of four room that are connected in a linear fashion ($r_1 \leftrightsquigarrow  r_2 \leftrightsquigarrow r_3 \leftrightsquigarrow r_4$). In the first time step, both agents are in room 1. Every consecutive step, agent $b$ moves one step to the right while agent $a$ remains in room 1. Becuase the Kripke models are not very informative to look at directly, we have at each time step evaluated propositions of form $a_i, \neg a_i, K_{a^\prime} a_i, K_{a^\prime} \neg a_i$ in the distinguished state $s$ (the real world) for every combination of $a \in \{a, b\}, a^\prime \in \{a, b\}, i \in \{1,2,3,4\}$. The code includes a function for automatically evaluating such a set of propositions and constructing a \LaTeX table that can be used to easily check the state of the Kripke model. 
+
+The results are shown in the tables below, where all propositions in the \emph{truth} row should be read as $(\mathbb{M}_t,s_t) \vDash p$, in the \emph{agent a} row as $(\mathbb{M}_t,s_t) \vDash K_ap$ and in the \emph{agent b} row as $(\mathbb{M}_t,s_t) \vDash K_bp$ (so each table cell shows propositions describing that room that are \emph{true} or that are \emph{known to be true by that agent}). 
+$$\begin{array}{|c|c|c|c|c|}
+\hline
+t = 1 & \text{Room 1}&\text{Room 2}&\text{Room 3}&\text{Room 4}\\
+\hline
+\text{Truth} & a_1,b_1 & \neg b_2,\neg a_2 & \neg b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\text{Agent a} & a_1,b_1 & \neg b_2,\neg a_2 & \neg b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\text{Agent b} & a_1,b_1 & \neg b_2,\neg a_2 & \neg b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\end{array}$$
+
+Initially, agent $a$ and $b$ can see each other, so both know where the other is, and consequently the entire state of the game. 
+
+
+$$\begin{array}{|c|c|c|c|c|}
+\hline
+t=2 & \text{Room 1}&\text{Room 2}&\text{Room 3}&\text{Room 4}\\
+\hline
+\text{Truth} & a_1,\neg b_1 & b_2,\neg a_2 & \neg b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\text{Agent a} & a_1,\neg b_1 & b_2,\neg a_2 & \neg b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\text{Agent b} & a_1,\neg b_1 & b_2,\neg a_2 & \neg b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\end{array}$$
+
+At time 2, $b$ has moved one step to the right (as can be read from the \emph{truth} row). After one step of $b$, agent $a$ knows that $b$ must be in room 2 because he is no longer in room 1 and this is the only room that was reachable in one step. Similarly, agent $b$ sees that $a$ is not in room 2. Because the only possible actions for $a$ were to move to room 2 or to stay in room 1, he knows $a$ must still be in room 1. Consequently, both agents still know the valuation of all atomic propositions. 
+
+
+$$\begin{array}{|c|c|c|c|c|}
+\hline
+t = 3 & \text{Room 1}&\text{Room 2}&\text{Room 3}&\text{Room 4}\\
+\hline
+\text{Truth} & a_1,\neg b_1 & \neg b_2,\neg a_2 & b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\text{Agent a} & a_1,\neg b_1 & \neg a_2 & \neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\text{Agent b} & \neg b_1 & \neg b_2 & b_3,\neg a_3 & \neg a_4,\neg b_4\\
+\hline
+\end{array}$$
+
+After another time step, $a$ has no way to know if $b$ stayed in room 2 or moved to room 3. Consequently, all he knows about $b$ is that he is not in room 1 (or he would be seen by $a$) or in room 4 (because that room cannot be reached from room 1 in two steps). Agent $b$ also doesn't know exactly where $a$ is anymore, but he does know $a$ cannot be in room 3 or 4.
+
+$$\begin{array}{|c|c|c|c|c|}
+\hline
+t = 4 & \text{Room 1}&\text{Room 2}&\text{Room 3}&\text{Room 4}\\
+\hline
+\text{Truth} & a_1,\neg b_1 & \neg b_2,\neg a_2 & \neg b_3,\neg a_3 & b_4,\neg a_4\\
+\hline
+\text{Agent a} & a_1,\neg b_1 & \neg a_2 & \neg a_3 & \neg a_4\\
+\hline
+\text{Agent b} & \neg b_1 & \neg b_2 & \neg b_3 & b_4,\neg a_4\\
+\hline
+\end{array}$$
+
+Finally, agent $b$ moves to the last room. Both agents now only kow that the other is not in the same room as they are.
+\section*{References}
+
+\printbibliography
+
+\end{document}

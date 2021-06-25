@@ -1,0 +1,193 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.1 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global}
+    \entry{postconditions}{article}{}
+      \name{author}{2}{}{%
+        {{hash=a9902ba7a6a0decf2f90615ddc8fd739}{%
+           family={Benevides},
+           familyi={B\bibinitperiod},
+           given={Mario},
+           giveni={M\bibinitperiod}}}%
+        {{hash=5e35249a0ecb688bba25133e05c8f5fa}{%
+           family={Lima},
+           familyi={L\bibinitperiod},
+           given={Isaque},
+           giveni={I\bibinitperiod}}}%
+      }
+      \strng{namehash}{896dfaac0fc3696893477fe6c48eb077}
+      \strng{fullhash}{896dfaac0fc3696893477fe6c48eb077}
+      \strng{bibnamehash}{896dfaac0fc3696893477fe6c48eb077}
+      \strng{authorbibnamehash}{896dfaac0fc3696893477fe6c48eb077}
+      \strng{authornamehash}{896dfaac0fc3696893477fe6c48eb077}
+      \strng{authorfullhash}{896dfaac0fc3696893477fe6c48eb077}
+      \field{sortinit}{B}
+      \field{sortinithash}{8de16967003c7207dae369d874f1456e}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computacion y Sistemas}
+      \field{month}{09}
+      \field{title}{Action Models with Postconditions}
+      \field{volume}{21}
+      \field{year}{2017}
+      \field{pages}{401\bibrangedash 406}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.13053/CyS-21-3-2808
+      \endverb
+    \endentry
+    \entry{Ditmarsch2007DynamicEL}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=84964498002ef763c31f167975a1d652}{%
+           family={Ditmarsch},
+           familyi={D\bibinitperiod},
+           given={H.\bibnamedelimi V.},
+           giveni={H\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+        {{hash=31199472e10bc464d1ed47ad8d67918e}{%
+           family={Hoek},
+           familyi={H\bibinitperiod},
+           given={W.},
+           giveni={W\bibinitperiod}}}%
+        {{hash=029f08b124ddb062acb4d4e0b8ac33a3}{%
+           family={Kooi},
+           familyi={K\bibinitperiod},
+           given={Barteld\bibnamedelima P.},
+           giveni={B\bibinitperiod\bibinitdelim P\bibinitperiod}}}%
+      }
+      \strng{namehash}{baa3c5a56c7182893d7517fcf99ff4df}
+      \strng{fullhash}{baa3c5a56c7182893d7517fcf99ff4df}
+      \strng{bibnamehash}{baa3c5a56c7182893d7517fcf99ff4df}
+      \strng{authorbibnamehash}{baa3c5a56c7182893d7517fcf99ff4df}
+      \strng{authornamehash}{baa3c5a56c7182893d7517fcf99ff4df}
+      \strng{authorfullhash}{baa3c5a56c7182893d7517fcf99ff4df}
+      \field{sortinit}{D}
+      \field{sortinithash}{c438b3d5d027251ba63f5ed538d98af5}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Dynamic Epistemic Logic}
+      \field{year}{2007}
+    \endentry
+    \entry{Bisimulations}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=9e7292c27370cc8340a3baf9e9a87fff}{%
+           family={Eijck},
+           familyi={E\bibinitperiod},
+           given={Jan},
+           giveni={J\bibinitperiod},
+           prefix={van},
+           prefixi={v\bibinitperiod}}}%
+      }
+      \strng{namehash}{9e7292c27370cc8340a3baf9e9a87fff}
+      \strng{fullhash}{9e7292c27370cc8340a3baf9e9a87fff}
+      \strng{bibnamehash}{9e7292c27370cc8340a3baf9e9a87fff}
+      \strng{authorbibnamehash}{9e7292c27370cc8340a3baf9e9a87fff}
+      \strng{authornamehash}{9e7292c27370cc8340a3baf9e9a87fff}
+      \strng{authorfullhash}{9e7292c27370cc8340a3baf9e9a87fff}
+      \field{sortinit}{E}
+      \field{sortinithash}{c554bd1a0b76ea92b9f105fe36d9c7b0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://staff.fnwi.uva.nl/d.j.n.vaneijck2/courses/lai0506/LAI11.pdf}}
+      \field{title}{Lecture notes Logica voor AI: Bisimulations}
+      \field{year}{2006}
+    \endentry
+    \entry{NetworkX}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=94707ad079516150870c2f9a2932df46}{%
+           family={Hagberg},
+           familyi={H\bibinitperiod},
+           given={Aric\bibnamedelima A.},
+           giveni={A\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=12f80aa3aca50b90f024775e52dde170}{%
+           family={Schult},
+           familyi={S\bibinitperiod},
+           given={Daniel\bibnamedelima A.},
+           giveni={D\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=58fb3a96810da0d56606677a3ce7e677}{%
+           family={Swart},
+           familyi={S\bibinitperiod},
+           given={Pieter\bibnamedelima J.},
+           giveni={P\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \name{editor}{3}{}{%
+        {{hash=cfa3239dded54488f9a82a5718d5b927}{%
+           family={Varoquaux},
+           familyi={V\bibinitperiod},
+           given={Gaël},
+           giveni={G\bibinitperiod}}}%
+        {{hash=5d98f8482048dcc3052b092b91de894c}{%
+           family={Vaught},
+           familyi={V\bibinitperiod},
+           given={Travis},
+           giveni={T\bibinitperiod}}}%
+        {{hash=eca9aeefdc8563b0e153fbedf08bc1a1}{%
+           family={Millman},
+           familyi={M\bibinitperiod},
+           given={Jarrod},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Pasadena, CA USA}%
+      }
+      \strng{namehash}{3a1b2e51fcffd45628935c7b6334f944}
+      \strng{fullhash}{3a1b2e51fcffd45628935c7b6334f944}
+      \strng{bibnamehash}{3a1b2e51fcffd45628935c7b6334f944}
+      \strng{authorbibnamehash}{3a1b2e51fcffd45628935c7b6334f944}
+      \strng{authornamehash}{3a1b2e51fcffd45628935c7b6334f944}
+      \strng{authorfullhash}{3a1b2e51fcffd45628935c7b6334f944}
+      \strng{editorbibnamehash}{5c6f569244b62f16c51830f1dac15458}
+      \strng{editornamehash}{5c6f569244b62f16c51830f1dac15458}
+      \strng{editorfullhash}{5c6f569244b62f16c51830f1dac15458}
+      \field{sortinit}{H}
+      \field{sortinithash}{6db6145dae8dc9e1271a8d556090b50a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 7th Python in Science Conference}
+      \field{title}{Exploring Network Structure, Dynamics, and Function using NetworkX}
+      \field{year}{2008}
+      \field{pages}{11\bibrangedash 15}
+      \range{pages}{5}
+    \endentry
+    \entry{partition}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=09427c885be5f5b6701787068880c1cb}{%
+           family={Reid},
+           familyi={R\bibinitperiod},
+           given={John},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{09427c885be5f5b6701787068880c1cb}
+      \strng{fullhash}{09427c885be5f5b6701787068880c1cb}
+      \strng{bibnamehash}{09427c885be5f5b6701787068880c1cb}
+      \strng{authorbibnamehash}{09427c885be5f5b6701787068880c1cb}
+      \strng{authornamehash}{09427c885be5f5b6701787068880c1cb}
+      \strng{authorfullhash}{09427c885be5f5b6701787068880c1cb}
+      \field{sortinit}{R}
+      \field{sortinithash}{b9c68a358aea118dfa887b6e902414a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://code.activestate.com/recipes/499354-equivalence-partition/}}
+      \field{title}{Equivalence partition (Python recipe)}
+      \field{year}{2007}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
