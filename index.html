@@ -113,7 +113,6 @@
         <a href="#reasoning_rules">Rules</a>
         <a href="#findings">Findings</a>
         <a href="#extended-knowledge-model-movement-between-rooms">Extensions</a>
-        <a href="#technical_details">Technical Details</a>
         <a href="https://github.com/MaxVinValk/AmongUsLAMAS">GitHub</a>
 </div>
       
@@ -181,18 +180,16 @@
       </ul>
     <p>For the first two in these types of knowledge to be gained, it is important that a crewmate a<sub>1</sub> is in the same room as agent a<sub>2</sub> (where a<sub>1</sub> <span>&#8800;</span> a<sub>2</sub>) at the same time. The last knowledge type about whether an agent is an impostor or not can be derived from the first three knowledge types as described in the next sections.</p>
     
-<!-- TODO: Rewrite -->
   <a id="reasoning_rules"></a>
   <h2>Reasoning Rules</h2>
-    <p>There are several rules a crewmate (here a<sub>1</sub>) can use to deduct this last type of knowledge about who the impostors are. They are listed as follows:</p>
-    <ul>
-        <li>Catching the impostor in the act: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>3</sub> is dead) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is the impostor.</li>
-        <li>Clearing a crewmate by seeing their task: (a<sub>1</sub> is in the same room x<sub>1</sub> as a<sub>2</sub> at step y $\land$ a<sub>2</sub> performed a visual task in room x<sub>1</sub> at step y) $\rightarrow$ a<sub>1</sub> knows a<sub>2</sub> is a crewmate.</li>
-        <li>Dead agents must be crewmates: a<sub>1</sub> is dead $\rightarrow$ all a know that a<sub>1</sub> a crewmate.</li>
-        <li>Trust friendly announcement: a<sub>1</sub> knows that a<sub>2</sub> is a crewmate, and a<sub>2</sub> announces that theuy know a<sub>3</sub> is a crewmate and a<sub>4</sub> is an impostor. Because of higher order knowledge, a<sub>1</sub> now also knows that a<sub>3</sub> is a crewmate and a<sub>4</sub> is an impostor.</li>
-    </ul>
-  
-<!-- TODO: Rewrite -->
+  <p>There are several rules a crewmate (here a<sub>1</sub>, a<sub>2</sub> and a<sub>3</sub>) can use to deduct this last type of knowledge about who the impostors (here a<sub>4</sub>) are. They are listed as follows:</p>
+  <ul>
+      <li>Catching the impostor in the act: ((a<sub>1</sub> $\land$ a<sub>4</sub>) in room x<sub>1</sub> at step y $\land$ a<sub>4</sub> kills a<sub>2</sub>) $\rightarrow$ K<sub>1</sub> Imp<sub>4</sub></li>
+      <li>Clearing a crewmate by seeing their visual task: ((a<sub>1</sub> $\land$ a<sub>2</sub>) in room x<sub>1</sub> at step y $\land$ a<sub>2</sub> performs a visual task in room x<sub>1</sub> at step y) $\rightarrow$ K<sub>1</sub> $\neg$Imp<sub>2</sub>.</li>
+      <li>Dead agents must be crewmates: a<sub>1</sub> is dead $\rightarrow$ C $\neg$Imp<sub>1</sub></li>
+      <li>Trust friendly announcement: (K<sub>1</sub> $\neg$Imp<sub>2</sub> $\land$ a<sub>2</sub> announces K<sub>2</sub>($\neg$Imp<sub>3</sub> $\land$ </sub>Imp<sub>4</sub>)) $\rightarrow$ K<sub>1</sub>($\neg$Imp<sub>3</sub> $\land$ </sub>Imp<sub>4</sub>). Because of higher order knowledge, a<sub>1</sub> now also knows that a<sub>3</sub> is a crewmate and a<sub>4</sub> is an impostor.</li>
+  </ul>
+    
   <a id="findings"></a>
   <h2>Findings</h2>
     <p>In order to test several functionalities and interactions of our implementation, we ran several simulations. The standard settings with which we ran the simulations are: </p>
@@ -247,7 +244,7 @@
       <figcaption>Fig.8 - The winrate of impostors and crewmates depending on the kill cooldown.</figcaption>
     </figure>
 
-<!-- TODO: Rewrite -->
+<!-- TODO: Jeroen add section -->
   <a id="extended-knowledge-model-movement-between-rooms"></a>
   <h2>Extended Knowledge Model: Movement between Rooms</h2>
   
@@ -263,12 +260,6 @@
     </ul>
     <p>This needs to be worked out more carefully, but it would be interesting to see how much of an advantage the agents would get by adding this type of reasoning. The combined size of the models is much larger than the basic knowledge model, but seems like it should be manageable if implemented efficiently. If we choose to implement it this model can also easily be extended for the <em>venting</em> mechanic where the impostor can take shortcuts, to allow crewmates to notice the impostor moved too quickly.</p>
     <p>It would be interesting to know if there is a more elegant way to deal with this kind of knowledge that creating a set of separate Kripke models.</p>
-
-    <!-- TODO: Rewrite -->
-  <a id="technical_details"></a>
-  <h2>Technical Details</h2>
-    <p>Our code can be found in this repository: <a href="https://github.com/MaxVinValk/AmongUsLAMAS">https://github.com/MaxVinValk/AmongUsLAMAS</a>. We have implemented the game mechanics and a gui in PyGame and the Kripke Model is based on <a href="https://github.com/erohkohl/mlsolver">https://github.com/erohkohl/mlsolver</a>. </p>
-  </div>
 
   <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
