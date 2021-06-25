@@ -108,7 +108,7 @@
 
 <div class="topnav" id="myHeader">
         <a href="#what_is_among_us">Introduction</a>
-        <a href="#kripke_model">Model</a>
+        <a href="#formal_model">Model</a>
         <a href="#knowledge_types">Knowledge</a>
         <a href="#reasoning_rules">Rules</a>
         <a href="#findings">Findings</a>
@@ -157,31 +157,31 @@
   <h2>Formal Model</h2>
     <p> Our simulation allows for one or two impostors, both with differing Kripke models. The formal definition for both will be given here. First, shared in both definitions are the following: </p>
     <ul>
-    <li><p>A set of m agents $A = \{a_1, a_2, ..., a_m\}$</p></li>
-    <li><p>A set of n rooms $X = \{r_1, r_2, ..., r_n\}$</p></li>
-    <li><p>A set of timesteps $Y = \mathbb{N}$</p></li>
-    <li><p>A set of predicates $P = \{Imp_1, Imp_2, ..., Imp_m \}$</p></li>
+    <li><p>A set of m agents <span class="math inline">A = \{a_1, a_2, ..., a_m\}</span></p></li>
+    <li><p>A set of n rooms <span class="math inline">X = \{r_1, r_2, ..., r_n\}</span></p></li>
+    <li><p>A set of timesteps <span class="math inline">Y = \mathbb{N}</span></p></li>
+    <li><p>A set of predicates <span class="math inline">P = \{Imp_1, Imp_2, ..., Imp_m \}</span></p></li>
     </ul>
     <br/>
   <h3>Kripke Model: 1 Impostor</h3>
   <p>The Kripke model for the case of one impostor is defined as follows:</p>
-  <p>$M^1 ::= &lt; S^1, \pi^1, R_1^1, ..., R_m^1 &gt;$, with:</p>
+  <p><span class="math inline">M^1 ::= &lt; S^1, \pi^1, R_1^1, ..., R_m^1 &gt;</span>, with:</p>
   <ul>
-    <li><p>$S^1 = \{s_i | a_i \in A\}$</p></li>
-    <li><p>$\pi^1(s_i)(Imp_j) = t$ iff $i = j$</p></li>
-    <li><p>$R_b^1 = \{(s_i, s_j) | s_i \in S^1 \land s_j \in S^1 \land i &ne; b \land j &ne; b\} \cup \{(s_i, s_j) | s_i \in S^1 \land i = j\}$ for all $b$ such that $a_b \in A$. <br/> In other words: The relations for an agent are the pairs of worlds in which the number corresponding to the agent does not appear, unioned with the set of reflexive relations.</p></li>
+    <li><p><span class="math inline">S^1 = \{s_i | a_i \in A\}</span></p></li>
+    <li><p><span class="math inline">\pi^1(s_i)(Imp_j) = t</span> iff <span class="math inline">i = j</span></p></li>
+    <li><p><span class="math inline">R_b^1 = \{(s_i, s_j) | s_i \in S^1 \land s_j \in S^1 \land i &ne; b \land j &ne; b\} \cup \{(s_i, s_j) | s_i \in S^1 \land i = j\}</span> for all <span class="math inline">b</span> such that <span class="math inline">a_b \in A</span>. <br/> In other words: The relations for an agent are the pairs of worlds in which the number corresponding to the agent does not appear, unioned with the set of reflexive relations.</p></li>
   </ul>
   <h3>Kripke Model: 2 Impostors</h3>
   <p>The Kripke model for the case of two impostors is defined as follows:</p>
   <p>$M^2 ::= &lt; S^1, \pi^1, R_1^1, ..., R_m^1 &gt;$, with:</p>
   <ul>
-    <li><p>$S^2 = \{s_{i-j} | a_i \in A \land a_j \in A \land i &lt; j\}$</p></li>
-    <li><p>$\pi^2(s_{i-j})(Imp_k) = t$ iff $i = k$ or $j = k$</p></li>
-    <li><p>$R_b^2 = \{(s_{i-j}, s_{k-l}) | s_{i-j} \in S^2 \land s_{k-l} \in S^2 \land i &ne; b \land j &ne; b \land k &ne; b \land l &ne; b \} \cup \{(s_{i-j}, s_{k-l}) | s_{i-j} \in S^2 \land s_{i-j} = s_{k-l}  \}$ for all $b$ such that $a_b \in A$</p></li>
+    <li><p><span class="math inline">S^2 = \{s_{i-j} | a_i \in A \land a_j \in A \land i &lt; j\}</span></p></li>
+    <li><p><span class="math inline">\pi^2(s_{i-j})(Imp_k) = t$ iff $i = k</span> or <span class="math inline">j = k</span></p></li>
+    <li><p><span class="math inline">R_b^2 = \{(s_{i-j}, s_{k-l}) | s_{i-j} \in S^2 \land s_{k-l} \in S^2 \land i &ne; b \land j &ne; b \land k &ne; b \land l &ne; b \} \cup \{(s_{i-j}, s_{k-l}) | s_{i-j} \in S^2 \land s_{i-j} = s_{k-l}  \}</span> for all <span class="math inline">b</span> such that <span class="math inline">a_b \in A</span></p></li>
   </ul>
 
   <a id="kripke_model"></a>
-  <h2>Kripke Model: Further discussion</h2>
+  <h3>Kripke Model: Number of worlds and relations</h3>
     <p>As aforementioned, our implementation of Among Us supports simulations with either one or two impostor(s). The size of the Kripke model The size of the model depends on this, as each world represents which single agent is, or pair of agents are, the impostor(s). For one impostor, the model has the same number of worlds as there are agents, where each world represents a state where one agent is the impostor. Each world is connected to each world, meaning there are <span class="math inline">10*10 =100</span> relations. </p>
     <p>For two impostors, the size of the model is the number of agents times the number of agents minus one, divided by two. In the case of ten agents, this means that there are <span class="math inline">(10*9)/2=45</span> possible worlds. This way, all possible combinations of agents have a single world. This means that <span class="math inline">w_1_2</span> does exist but <span class="math inline">w_2_1</span> does not. As for the relations, for each agent, each world in which that agent is not involved (45-9=36) is connected to all other worlds minus itself (35). Additionally, each world has a reflexive relation to itself. There are therefore <span class="math inline">(36*35)+45=1305</span> relations per agents, so <span class="math inline">10*1305=13050</span> relations in total. At the start of the game, the Kripke Model for ten agents and two impostors can be seen in Fig.2.</p>
     <figure>
