@@ -222,22 +222,22 @@ class AmongUsTwoImp(AmongUsKripke):
         self.worlds = []
         self.relations = {}
 
-        # Build the same number of worlds as there are agents. Each world has one imposter
+        # Build the same number of worlds as there are agents. Each world has one impostor
         for i in range(self.num_agents):
             for k in range(i + 1, self.num_agents):
 
-                agent_is_imposter = {}
+                agent_is_impostor = {}
                 for j in range(self.num_agents):
                     if i == j or k == j:
-                        agent_is_imposter[f"IsImp:{j}"] = True
+                        agent_is_impostor[f"IsImp:{j}"] = True
                     else:
-                        agent_is_imposter[f"IsImp:{j}"] = False
+                        agent_is_impostor[f"IsImp:{j}"] = False
 
-                self.worlds.append(World(f"Imp{i}_{k}", agent_is_imposter))
+                self.worlds.append(World(f"Imp{i}_{k}", agent_is_impostor))
 
         # Build relations according to the following rules:
-        # Each agent knows whether they themselves are imposter or not
-        # This leads to crewmates not having accessibility to the worlds where they are imposter
+        # Each agent knows whether they themselves are impostor or not
+        # This leads to crewmates not having accessibility to the worlds where they are impostor
 
         # Relationships for each agent
         for i in range(self.num_agents - 2):
@@ -270,7 +270,7 @@ class AmongUsOneImp(AmongUsKripke):
         super().__init__(num_agents)
 
         # Last index is always the impostor
-        self.imposter = num_agents - 1
+        self.impostor = num_agents - 1
 
         self.setup()
 
@@ -278,22 +278,22 @@ class AmongUsOneImp(AmongUsKripke):
         self.worlds = []
         self.relations = {}
 
-        # Build the same number of worlds as there are agents. Each world has one imposter
+        # Build the same number of worlds as there are agents. Each world has one impostor
         for i in range(self.num_agents):
-            agent_is_imposter = {}
+            agent_is_impostor = {}
             for j in range(self.num_agents):
                 if i == j:
-                    agent_is_imposter["IsImp:{}".format(j)] = True
+                    agent_is_impostor["IsImp:{}".format(j)] = True
                 else:
-                    agent_is_imposter["IsImp:{}".format(j)] = False
+                    agent_is_impostor["IsImp:{}".format(j)] = False
 
-            self.worlds.append(World("Imp{}".format(i), agent_is_imposter))
+            self.worlds.append(World("Imp{}".format(i), agent_is_impostor))
 
         # Build relations according to the following rules:
-        # Each agent knows whether they themselves are imposter or not
-        # This leads to crewmates not having accessibility to the worlds where they are imposter
+        # Each agent knows whether they themselves are impostor or not
+        # This leads to crewmates not having accessibility to the worlds where they are impostor
         for i in range(self.num_agents):
-            if i is not self.imposter:
+            if i is not self.impostor:
                 self.relations[str(i)] = set(
                     ("Imp{}".format(x), "Imp{}".format(y)) for x in range(self.num_agents) for y in
                     range(self.num_agents) if
@@ -302,7 +302,7 @@ class AmongUsOneImp(AmongUsKripke):
         self.relations.update(add_symmetric_edges(self.relations))
         self.relations.update(add_reflexive_edges(self.worlds, self.relations))
         self.kripke_structure = KripkeStructure(self.worlds, self.relations)
-        self.real_world = "Imp{}".format(self.imposter)
+        self.real_world = "Imp{}".format(self.impostor)
 
     def plot_fixed(self):
         return super().plot_fixed(size=4)

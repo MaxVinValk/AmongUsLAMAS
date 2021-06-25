@@ -182,7 +182,7 @@ class Controller(LMObject):
             self.run_to_end()
             self.reset()
         print(f'Crewmates won {self.count_crewmate_wins} times out of {epochs}.')
-        print(f'Imposters won {epochs - self.count_crewmate_wins} times out of {epochs}.')
+        print(f'Impostors won {epochs - self.count_crewmate_wins} times out of {epochs}.')
         self.count_crewmate_wins = 0
 
     def check_game_over(self):

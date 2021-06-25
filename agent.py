@@ -166,7 +166,7 @@ class Crewmate(Agent):
                     agents_elsewhere.append(a)
 
         if agents_in_same_room:
-            # Catching the imposter on the body
+            # Catching the impostor on the body
             if agent_id_kill_witnessed != -1:
                 self.km.update_known_impostor(self.agent_id, agent_id_kill_witnessed)
 
@@ -196,7 +196,7 @@ class Crewmate(Agent):
                     self.km.update(self.agent_id, formula)
 
     def vote(self, agents):
-        """Crewmates vote for an agent if they're sure they are the imposter.
+        """Crewmates vote for an agent if they're sure they are the impostor.
         Otherwise, they have a chance of either voting an agent that they still suspect,
         or passing."""
 
@@ -315,7 +315,7 @@ class Impostor(Agent):
         return -1
 
     def announce(self):
-        # The imposter never announces anything, as this would introduce false knowledge
+        # The impostor never announces anything, as this could introduce false knowledge
         pass
 
     def receive(self, announced):
@@ -343,17 +343,17 @@ class Impostor(Agent):
         self.target = min(number_of_suspects_per_agent, key = lambda t: t[1])[0]
 
     def vote(self, agents):
-        """The imposter votes the agents that are closest to finding them.
-        If there is no such agent, vote for a random living agent that is not an imposter."""
+        """The impostor votes the agents that are closest to finding them.
+        If there is no such agent, vote for a random living agent that is not an impostor."""
 
-        # If the imposters have a set target, vote that
+        # If the impostors have a set target, vote that
         if self.target != -1:
             vote = self.target
         else: # Vote a random living agents
             vote = random.sample([a.agent_id for a in agents if not a.agent_id == self.agent_id and a.alive and not a.is_impostor()], 1)[0]
 
         self.target = -1
-        self.logger.log(f"Imposter {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
+        self.logger.log(f"Impostor {self.agent_id} votes for {vote}", Logger.LOG | Logger.PRINT_VISUAL)
         return vote
 
     def round_reset(self):
